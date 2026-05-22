@@ -11,9 +11,18 @@ https://docs.djangoproject.com/en/6.0/ref/settings/
 """
 
 from pathlib import Path
+import os
+import json
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
+
+# credentials
+credentials_path = os.path.join(BASE_DIR, 'admin.json')
+
+# credentials config from json
+with open(credentials_path) as f:
+    db_config = json.load(f)
 
 
 # Quick-start development settings - unsuitable for production
@@ -37,6 +46,9 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'catalogo',
+    'suscripciones',
+    'usuarios',
 ]
 
 MIDDLEWARE = [
@@ -73,12 +85,8 @@ WSGI_APPLICATION = 'cenit.wsgi.application'
 # https://docs.djangoproject.com/en/6.0/ref/settings/#databases
 
 DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
-    }
+    'default': db_config
 }
-
 
 # Password validation
 # https://docs.djangoproject.com/en/6.0/ref/settings/#auth-password-validators
