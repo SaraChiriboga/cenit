@@ -76,7 +76,8 @@ class Cancion(models.Model):
     esexplicita = models.BooleanField(db_column='esExplicita')
     estadopublicacion = models.CharField(db_column='estadoPublicacion', max_length=50,
                                          db_collation='SQL_Latin1_General_CP1_CI_AS')
-
+    urlportada = models.CharField(db_column='urlPortada', max_length=255, db_collation='SQL_Latin1_General_CP1_CI_AS',
+                                  blank=True, null=True)
     # Transformados a ForeignKey relacionales
     album = models.ForeignKey(Album, on_delete=models.DO_NOTHING, db_column='Album_idAlbum')
     genero = models.ForeignKey(Genero, on_delete=models.DO_NOTHING, db_column='Genero_idGenero')

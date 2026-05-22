@@ -130,3 +130,16 @@ LOGIN_URL = 'login'
 
 STATIC_URL = 'static/'
 STATICFILES_DIRS = [os.path.join(BASE_DIR, 'static')]
+
+CREDENTIALS_FILE = os.path.join(BASE_DIR, 'spotifyCreds.json')
+
+# Leer el JSON de credenciales
+try:
+    with open(CREDENTIALS_FILE) as f:
+        credentials = json.load(f)
+        SPOTIFY_CLIENT_ID = credentials.get('spotify_client_id')
+        SPOTIFY_CLIENT_SECRET = credentials.get('spotify_client_secret')
+except FileNotFoundError:
+    print("Advertencia: No se encontró el archivo credentials.json")
+    SPOTIFY_CLIENT_ID = None
+    SPOTIFY_CLIENT_SECRET = None
