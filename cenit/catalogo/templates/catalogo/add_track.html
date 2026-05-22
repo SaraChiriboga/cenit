@@ -1,102 +1,327 @@
 {% extends "base.html" %}
 
-{% block title %}CÉNIT | Add Track{% endblock %}
-{% block section_name %}New Asset Creation{% endblock %}
+{% block title %}CÉNIT | Agregar Canción{% endblock %}
 
 {% block content %}
-<div class="max-w-[800px] mx-auto animate-in fade-in slide-in-from-bottom-4 duration-700">
-    <div class="glass-panel rounded-xl p-8 border-white/5 relative z-10">
-        <form method="POST" class="space-y-6">
+<style>
+    #fixed-bg {
+        position: fixed;
+        inset: 0;
+        z-index: -1;
+        background-color: #0B0C10;
+        background-size: cover;
+        background-position: center;
+        background-attachment: fixed;
+        transition: background-image 1s ease-in-out;
+        filter: blur(12px) brightness(0.9);
+        transform: scale(1.05);
+    }
+    #fixed-bg::after {
+        content: '';
+        position: absolute;
+        inset: 0;
+        background: linear-gradient(to bottom, rgba(11, 12, 16, 0.75) 0%, rgba(11, 12, 16, 0.90) 100%);
+    }
+
+    .glass-ultra {
+        background: rgba(0, 0, 0, 0.25);
+        backdrop-filter: blur(40px);
+        -webkit-backdrop-filter: blur(40px);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    #custom-player { display: none; }
+    #custom-player.active { display: block; }
+
+    #progress-bar {
+        -webkit-appearance: none;
+        appearance: none;
+        width: 100%;
+        height: 4px;
+        border-radius: 99px;
+        background: rgba(255,255,255,0.15);
+        outline: none;
+        cursor: pointer;
+    }
+    #progress-bar::-webkit-slider-thumb {
+        -webkit-appearance: none;
+        width: 12px;
+        height: 12px;
+        border-radius: 50%;
+        background: var(--color-secondary, #2DD4BF);
+        cursor: pointer;
+        box-shadow: 0 0 6px rgba(45,212,191,0.6);
+    }
+    #progress-bar::-moz-range-thumb {
+        width: 12px; height: 12px;
+        border-radius: 50%;
+        background: var(--color-secondary, #2DD4BF);
+        border: none; cursor: pointer;
+    }
+
+    #btn-play-pause {
+        width: 40px; height: 40px;
+        border-radius: 50%;
+        background: var(--color-secondary, #2DD4BF);
+        border: none; cursor: pointer;
+        display: flex; align-items: center; justify-content: center;
+        flex-shrink: 0;
+        transition: transform 0.15s ease, filter 0.15s;
+    }
+    #btn-play-pause:hover { filter: brightness(1.15); transform: scale(1.08); }
+    #btn-play-pause .material-symbols-outlined { font-size: 22px; color: #0B0C10; user-select: none; }
+
+    .preview-badge {
+        font-size: 10px; font-weight: 700;
+        letter-spacing: 0.08em;
+        color: rgba(255,255,255,0.35);
+        text-transform: uppercase;
+    }
+
+    /* Logo Spotify SVG inline */
+    .spotify-logo { width: 20px; height: 20px; flex-shrink: 0; }
+</style>
+
+<div id="fixed-bg"></div>
+
+<div id="page-container" class="w-full min-h-[calc(100vh-64px)] p-8">
+    <div class="max-w-[1800px] mx-auto h-full flex flex-col">
+        <div class="mb-8">
+            <h1 class="text-4xl font-extrabold text-white">Nueva Canción</h1>
+            <p class="text-white/60">Registra metadatos de activos en CÉNIT.</p>
+        </div>
+
+        <form method="POST" class="grid grid-cols-1 xl:grid-cols-4 gap-8 h-full">
             {% csrf_token %}
 
-            <div class="grid grid-cols-[200px_1fr] gap-8">
-                <div class="space-y-4">
-                    <label class="font-label-md text-on-surface/80">Cover Art</label>
-                    <div id="cover-preview" class="aspect-square w-full rounded-lg border-2 border-dashed border-white/10 bg-surface-container-low flex items-center justify-center overflow-hidden">
-                        <span class="material-symbols-outlined text-4xl text-on-surface-variant">photo_library</span>
-                    </div>
-                    <input id="urlportada" name="urlportada" type="text" placeholder="URL de imagen"
-                           class="w-full bg-surface-container-low border border-white/10 rounded-lg p-2 text-xs text-on-surface outline-none">
+            <!-- Columna izquierda -->
+            <div class="xl:col-span-1 space-y-4">
+                <div class="aspect-square w-full rounded-3xl border border-white/10 glass-ultra flex items-center justify-center overflow-hidden shadow-2xl relative">
+                    <img id="track-image" src="" class="w-full h-full object-cover hidden">
+                    <span id="icon-empty" class="material-symbols-outlined text-7xl text-white/20">image</span>
                 </div>
 
-                <div class="space-y-4">
-                    <div class="space-y-1">
-                        <label class="text-xs font-bold text-on-surface-variant uppercase">Song Title</label>
-                        <input id="song_title" name="titulocancion" required type="text"
-                               class="w-full bg-surface-container-low border border-white/10 rounded-lg py-3 px-4 outline-none focus:border-secondary">
+                <!-- Reproductor custom -->
+                <div id="custom-player" class="glass-ultra rounded-2xl p-4 space-y-3">
+                    <div class="flex items-center justify-between">
+                        <span class="preview-badge">Vista previa · 30s</span>
+                        <span id="time-display" class="text-xs text-white/40 font-mono">0:00 / 0:30</span>
                     </div>
-
-                    <div class="space-y-1">
-                        <label class="text-xs font-bold text-on-surface-variant uppercase">Artist</label>
-                        <input id="artist_name" name="artista" type="text"
-                               class="w-full bg-surface-container-low border border-white/10 rounded-lg py-3 px-4 outline-none">
-                    </div>
-
-                    <button id="btn-search" type="button" class="w-full py-2 rounded-lg bg-surface-container-highest/50 border border-white/5 text-on-surface-variant hover:text-secondary transition-all flex items-center justify-center gap-2">
-                        <span class="material-symbols-outlined text-sm">search</span> Search Spotify
-                    </button>
-
-                    <div class="grid grid-cols-2 gap-4">
-                        <div class="space-y-1">
-                            <label class="text-xs font-bold text-on-surface-variant uppercase">Duration (sec)</label>
-                            <input id="duration" name="duracionseg" type="number" class="w-full bg-surface-container-low border border-white/10 rounded-lg py-3 px-4 outline-none">
-                        </div>
-                        <div class="space-y-1">
-                            <label class="text-xs font-bold text-on-surface-variant uppercase">Genre</label>
-                            <select name="genero" class="w-full bg-surface-container-low border border-white/10 rounded-lg py-3 px-4 outline-none">
-                                {% for genero in generos %}
-                                    <option value="{{ genero.idgenero }}">{{ genero.nombregenero }}</option>
-                                {% endfor %}
-                            </select>
+                    <input type="range" id="progress-bar" min="0" max="100" value="0" step="0.1">
+                    <div class="flex items-center gap-3">
+                        <button type="button" id="btn-play-pause">
+                            <span class="material-symbols-outlined" id="play-icon">play_arrow</span>
+                        </button>
+                        <div class="min-w-0">
+                            <p id="player-title" class="text-white text-sm font-bold truncate"></p>
+                            <p id="player-artist" class="text-white/50 text-xs truncate"></p>
                         </div>
                     </div>
                 </div>
+
+                <input type="text" name="urlportada" id="urlportada" placeholder="URL de la portada..."
+                       class="w-full bg-black/40 border border-white/10 rounded-xl p-4 text-sm text-white outline-none focus:border-secondary"
+                       oninput="applyStyles(this.value)">
             </div>
 
-            <div class="flex items-center justify-end gap-4 pt-6 border-t border-white/5">
-                <a href="{% url 'catalog_overview' %}" class="px-6 py-2.5 text-on-surface-variant hover:text-white">Cancel</a>
-                <button type="submit" class="px-8 py-2.5 rounded-lg bg-secondary text-background font-bold hover:bg-secondary/90 transition-all">
-                    Save Track
-                </button>
+            <!-- Columna derecha -->
+            <div class="xl:col-span-3 space-y-6">
+
+                <!-- Barra de búsqueda con logo Spotify -->
+                <div class="p-4 bg-black/40 rounded-2xl border border-white/10 flex gap-4 items-center backdrop-blur-md">
+                    <!-- Logo Spotify SVG -->
+                    <svg class="spotify-logo ml-2" viewBox="0 0 24 24" fill="#1DB954" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M12 0C5.4 0 0 5.4 0 12s5.4 12 12 12 12-5.4 12-12S18.66 0 12 0zm5.521 17.34c-.24.359-.66.48-1.021.24-2.82-1.74-6.36-2.101-10.561-1.141-.418.122-.779-.179-.899-.539-.12-.421.18-.78.54-.9 4.56-1.021 8.52-.6 11.64 1.32.42.18.479.659.301 1.02zm1.44-3.3c-.301.42-.841.6-1.262.3-3.239-1.98-8.159-2.58-11.939-1.38-.479.12-1.02-.12-1.14-.6-.12-.48.12-1.021.6-1.141C9.6 9.9 15 10.561 18.72 12.84c.361.181.54.78.241 1.2zm.12-3.36C15.24 8.4 8.82 8.16 5.16 9.301c-.6.179-1.2-.181-1.38-.721-.18-.601.18-1.2.72-1.381 4.26-1.26 11.28-1.02 15.721 1.621.539.3.719 1.02.419 1.56-.299.421-1.02.599-1.559.3z"/>
+                    </svg>
+
+                    <input type="text" id="search_input" placeholder="Buscar en Spotify..."
+                           class="flex-1 bg-transparent border-none text-white placeholder:text-white/40 outline-none">
+                    <button type="button" id="btn-search"
+                            class="bg-secondary text-background px-10 rounded-xl font-bold hover:brightness-110 transition-all">
+                        Buscar
+                    </button>
+                </div>
+
+                <div class="glass-ultra p-10 rounded-3xl grid grid-cols-1 md:grid-cols-2 gap-8 text-white">
+                    <div>
+                        <label class="block text-xs font-bold text-white/60 uppercase mb-2">Título de Canción</label>
+                        <input type="text" name="titulocancion" id="titulocancion" required
+                               class="w-full bg-black/30 border border-white/10 rounded-xl p-4 outline-none focus:ring-2 ring-secondary/30">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-white/60 uppercase mb-2">Artista</label>
+                        <input type="text" id="artist_name" name="artista"
+                               class="w-full bg-black/30 border border-white/10 rounded-xl p-4 outline-none focus:ring-2 ring-secondary/30">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-white/60 uppercase mb-2">Álbum</label>
+                        <select name="album" class="w-full bg-black/30 border border-white/10 rounded-xl p-4 outline-none">
+                            {% for album in albumes %}<option value="{{ album.idalbum }}">{{ album.tituloalbum }}</option>{% endfor %}
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-white/60 uppercase mb-2">Género</label>
+                        <select name="genero" class="w-full bg-black/30 border border-white/10 rounded-xl p-4 outline-none">
+                            {% for genero in generos %}<option value="{{ genero.idgenero }}">{{ genero.nombregenero }}</option>{% endfor %}
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-white/60 uppercase mb-2">Duración (seg)</label>
+                        <input type="number" name="duracionseg" id="duracionseg"
+                               class="w-full bg-black/30 border border-white/10 rounded-xl p-4 outline-none">
+                    </div>
+                    <div class="flex items-end pb-2">
+                        <label class="flex items-center gap-3 cursor-pointer">
+                            <input type="checkbox" name="esexplicita" id="esexplicita"
+                                   class="w-6 h-6 rounded border-white/20 bg-black/30 accent-secondary">
+                            <span class="font-bold text-white/80">Contenido Explícito (E)</span>
+                        </label>
+                    </div>
+                </div>
+
+                <div class="flex justify-end gap-6 pt-4">
+                    <a href="{% url 'catalog_overview' %}" class="px-8 py-4 text-white/60 hover:text-white transition-all">Cancelar</a>
+                    <button type="submit"
+                            class="px-12 py-4 bg-secondary text-background font-bold rounded-xl hover:scale-105 transition-transform shadow-lg shadow-secondary/20">
+                        Guardar Track
+                    </button>
+                </div>
             </div>
         </form>
     </div>
 </div>
 
-<div id="results-modal" class="hidden absolute inset-0 bg-background/90 z-20 p-6 overflow-y-auto">
-    <h3 class="text-secondary font-bold mb-4">Selecciona la canción correcta:</h3>
-    <div id="results-list" class="space-y-3"></div>
-    <button onclick="document.getElementById('results-modal').classList.add('hidden')" class="mt-4 text-sm text-on-surface-variant">Cerrar</button>
+<!-- Modal resultados con logo Spotify en header -->
+<div id="results-modal" class="hidden fixed inset-0 bg-black/80 backdrop-blur-xl z-50 flex items-center justify-center p-4">
+    <div class="bg-black/90 w-full max-w-lg rounded-3xl p-8 border border-white/10">
+
+        <!-- Header del modal con logo -->
+        <div class="flex items-center gap-3 mb-6">
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="#1DB954" xmlns="http://www.w3.org/2000/svg">
+                <path d="M12 0C5.4 0 0 5.4 0 12s5.4 12 12 12 12-5.4 12-12S18.66 0 12 0zm5.521 17.34c-.24.359-.66.48-1.021.24-2.82-1.74-6.36-2.101-10.561-1.141-.418.122-.779-.179-.899-.539-.12-.421.18-.78.54-.9 4.56-1.021 8.52-.6 11.64 1.32.42.18.479.659.301 1.02zm1.44-3.3c-.301.42-.841.6-1.262.3-3.239-1.98-8.159-2.58-11.939-1.38-.479.12-1.02-.12-1.14-.6-.12-.48.12-1.021.6-1.141C9.6 9.9 15 10.561 18.72 12.84c.361.181.54.78.241 1.2zm.12-3.36C15.24 8.4 8.82 8.16 5.16 9.301c-.6.179-1.2-.181-1.38-.721-.18-.601.18-1.2.72-1.381 4.26-1.26 11.28-1.02 15.721 1.621.539.3.719 1.02.419 1.56-.299.421-1.02.599-1.559.3z"/>
+            </svg>
+            <div>
+                <h3 class="text-white font-bold text-xl leading-none">Resultados</h3>
+                <p class="text-white/30 text-xs mt-0.5">vía Spotify</p>
+            </div>
+        </div>
+
+        <div id="results-list" class="space-y-3 max-h-96 overflow-y-auto"></div>
+        <button onclick="document.getElementById('results-modal').classList.add('hidden')"
+                class="mt-8 w-full py-3 bg-white/5 rounded-xl font-bold text-white/70 hover:bg-white/10">
+            Cerrar
+        </button>
+    </div>
 </div>
 
+<audio id="audio-el" preload="none"></audio>
+
 <script>
-    document.getElementById('btn-search').addEventListener('click', async () => {
-    const q = document.getElementById('song_title').value + " " + document.getElementById('artist_name').value;
-    const list = document.getElementById('results-list');
-    const modal = document.getElementById('results-modal');
+    const fixedBg      = document.getElementById('fixed-bg');
+    const trackImg     = document.getElementById('track-image');
+    const iconEmpty    = document.getElementById('icon-empty');
+    const audioEl      = document.getElementById('audio-el');
+    const customPlayer = document.getElementById('custom-player');
+    const progressBar  = document.getElementById('progress-bar');
+    const btnPlay      = document.getElementById('btn-play-pause');
+    const playIcon     = document.getElementById('play-icon');
+    const timeDisplay  = document.getElementById('time-display');
+    const playerTitle  = document.getElementById('player-title');
+    const playerArtist = document.getElementById('player-artist');
 
-    list.innerHTML = 'Buscando...';
-    modal.classList.remove('hidden');
+    function fmtTime(s) {
+        const m = Math.floor(s / 60);
+        const sec = Math.floor(s % 60).toString().padStart(2, '0');
+        return `${m}:${sec}`;
+    }
 
-    const res = await fetch("{% url 'search_spotify_ajax' %}?q=" + encodeURIComponent(q));
-    const data = await res.json(); // Ahora data es una lista
+    function applyStyles(url) {
+        if (url && url.length > 5) {
+            fixedBg.style.backgroundImage = `url('${url}')`;
+            trackImg.src = url;
+            trackImg.classList.remove('hidden');
+            iconEmpty.classList.add('hidden');
+        } else {
+            fixedBg.style.backgroundImage = 'none';
+            trackImg.classList.add('hidden');
+            iconEmpty.classList.remove('hidden');
+        }
+    }
 
-    list.innerHTML = '';
-    data.forEach(item => {
-        const div = document.createElement('div');
-        div.className = "flex items-center gap-3 p-3 bg-surface-container hover:bg-secondary/10 cursor-pointer rounded";
-        div.innerHTML = `<img src="${item.album_cover}" class="w-12 h-12 rounded">
-                         <div><div class="font-bold text-sm">${item.name}</div><div class="text-xs">${item.artist}</div></div>`;
+    function loadPreview(previewUrl, title, artist) {
+        const hasPreview = previewUrl && previewUrl !== 'null' && previewUrl !== 'undefined';
+        if (hasPreview) {
+            audioEl.pause();
+            audioEl.src = previewUrl;
+            audioEl.load();
+            customPlayer.classList.add('active');
+            playIcon.textContent = 'play_arrow';
+            progressBar.value = 0;
+            timeDisplay.textContent = '0:00 / 0:30';
+            playerTitle.textContent  = title  || '';
+            playerArtist.textContent = artist || '';
+        } else {
+            audioEl.pause();
+            audioEl.src = '';
+            customPlayer.classList.remove('active');
+        }
+    }
 
-        div.onclick = () => {
-            document.getElementById('song_title').value = item.name;
-            document.getElementById('urlportada').value = item.album_cover;
-            document.getElementById('duration').value = item.duration;
-            document.getElementById('cover-preview').innerHTML = `<img src="${item.album_cover}">`;
-            modal.classList.add('hidden');
-        };
-        list.appendChild(div);
+    btnPlay.addEventListener('click', () => {
+        if (audioEl.paused) { audioEl.play(); playIcon.textContent = 'pause'; }
+        else { audioEl.pause(); playIcon.textContent = 'play_arrow'; }
     });
-});
+
+    audioEl.addEventListener('timeupdate', () => {
+        if (!audioEl.duration) return;
+        progressBar.value = (audioEl.currentTime / audioEl.duration) * 100;
+        timeDisplay.textContent = `${fmtTime(audioEl.currentTime)} / ${fmtTime(audioEl.duration)}`;
+    });
+
+    progressBar.addEventListener('input', () => {
+        if (!audioEl.duration) return;
+        audioEl.currentTime = (progressBar.value / 100) * audioEl.duration;
+    });
+
+    audioEl.addEventListener('ended', () => {
+        playIcon.textContent = 'play_arrow';
+        progressBar.value = 0;
+        timeDisplay.textContent = `0:00 / ${fmtTime(audioEl.duration)}`;
+    });
+
+    document.getElementById('btn-search').onclick = async () => {
+        const q    = document.getElementById('search_input').value;
+        const list = document.getElementById('results-list');
+        list.innerHTML = '<p class="text-white/50 text-center py-4">Buscando...</p>';
+        document.getElementById('results-modal').classList.remove('hidden');
+
+        const res  = await fetch("{% url 'search_spotify_ajax' %}?q=" + encodeURIComponent(q));
+        const data = await res.json();
+
+        list.innerHTML = '';
+        data.forEach(item => {
+            const div = document.createElement('div');
+            div.className = "flex items-center gap-4 p-4 bg-black/40 hover:bg-secondary/20 cursor-pointer rounded-2xl border border-white/5 transition-all";
+            div.innerHTML = `
+                <img src="${item.album_cover}" class="w-16 h-16 rounded-xl object-cover flex-shrink-0">
+                <div class="min-w-0 flex-1">
+                    <div class="font-bold text-white truncate">${item.name}</div>
+                    <div class="text-sm text-secondary truncate">${item.artist}</div>
+                    ${item.preview_url
+                        ? '<div class="text-xs text-white/30 mt-0.5">▶ Preview disponible</div>'
+                        : '<div class="text-xs text-white/20 mt-0.5">Sin preview</div>'}
+                </div>`;
+            div.onclick = () => {
+                document.getElementById('titulocancion').value = item.name;
+                document.getElementById('artist_name').value  = item.artist;
+                document.getElementById('urlportada').value   = item.album_cover;
+                document.getElementById('duracionseg').value  = item.duration;
+                applyStyles(item.album_cover);
+                loadPreview(item.preview_url, item.name, item.artist);
+                document.getElementById('results-modal').classList.add('hidden');
+            };
+            list.appendChild(div);
+        });
+    };
 </script>
 {% endblock %}

@@ -54,17 +54,20 @@ def sync_spotify_track(request, cancion_id):
 
 
 @login_required
+# catalogo/views.py
+
+@login_required
 def search_spotify_ajax(request):
-    query = request.GET.get('q', '')
+    query = request.GET.get('q', '').strip()
     if not query:
         return JsonResponse({'error': 'No query provided'}, status=400)
 
     spotify = SpotifyClient()
-    # Asumimos que el usuario escribe "Título - Artista" o solo el título
-    results = spotify.search_track_info(query, "")
+    # Enviamos la query tal cual, el servicio ya se encarga de formatear
+    results = spotify.search_track_info_list(query)  # Usaremos una versión mejorada
 
     if results:
-        return JsonResponse(results)
+        return JsonResponse(results, safe=False)  # Retornamos la lista de 5 resultados
     return JsonResponse({'error': 'No encontrado'}, status=404)
 
 @login_required
@@ -89,7 +92,8 @@ def search_track_info(self, query):
                 'artist': t['artists'][0]['name'],
                 'spotify_url': t['external_urls']['spotify'],
                 'album_cover': t['album']['images'][1]['url'] if t['album']['images'] else None,
-                'duration': round(t['duration_ms'] / 1000)
+                'duration': round(t['duration_ms'] / 1000),
+                'preview_url': t.get('preview_url'), 
             } for t in tracks
         ]
     return []
