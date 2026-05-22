@@ -1,0 +1,259 @@
+{% extends "base.html" %}
+
+{% block title %}Operations Overview{% endblock %}
+{% block section_name %}Operations Overview{% endblock %}
+
+{% block content %}
+<section class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
+    <div class="glass-panel p-6 rounded-xl relative overflow-hidden group">
+        <div class="absolute top-0 left-0 w-full h-[2px] bg-secondary"></div>
+        <div class="flex justify-between items-start mb-4">
+            <span class="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-widest">Total Live Tracks</span>
+            <span class="material-symbols-outlined text-secondary" data-icon="music_note">music_note</span>
+        </div>
+        <div class="font-headline-lg text-headline-lg text-primary mb-1">{{ canciones.count|default:"0" }}</div>
+        <div class="text-secondary font-label-sm text-label-sm flex items-center gap-1">
+            <span class="material-symbols-outlined text-[14px]" data-icon="trending_up">trending_up</span>
+            BD Sincronizada
+        </div>
+    </div>
+
+    <div class="glass-panel p-6 rounded-xl relative overflow-hidden group">
+        <div class="absolute top-0 left-0 w-full h-[2px] bg-secondary"></div>
+        <div class="flex justify-between items-start mb-4">
+            <span class="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-widest">Active Premium Users</span>
+            <span class="material-symbols-outlined text-secondary" data-icon="sync">sync</span>
+        </div>
+        <div class="font-headline-lg text-headline-lg text-primary mb-1">842,119</div>
+        <div class="text-secondary font-label-sm text-label-sm flex items-center gap-1">
+            <span class="material-symbols-outlined text-[14px]" data-icon="sync_alt">sync_alt</span>
+            94.2% Sync Rate
+        </div>
+    </div>
+
+    <div class="glass-panel p-6 rounded-xl relative overflow-hidden group">
+        <div class="absolute top-0 left-0 w-full h-[2px] bg-secondary"></div>
+        <div class="flex justify-between items-start mb-4">
+            <span class="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-widest">Est. Revenue (Monthly)</span>
+            <span class="material-symbols-outlined text-secondary" data-icon="payments">payments</span>
+        </div>
+        <div class="font-headline-lg text-headline-lg text-primary mb-1">$4.21M</div>
+        <div class="text-on-surface-variant font-label-sm text-label-sm">Projected: $4.5M</div>
+    </div>
+
+    <div class="glass-panel p-6 rounded-xl relative overflow-hidden group">
+        <div class="absolute top-0 left-0 w-full h-[2px] bg-error"></div>
+        <div class="flex justify-between items-start mb-4">
+            <span class="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-widest">Security Access Alerts</span>
+            <span class="material-symbols-outlined text-error" data-icon="security">security</span>
+        </div>
+        <div class="font-headline-lg text-headline-lg text-error mb-1">14</div>
+        <div class="text-on-surface-variant font-label-sm text-label-sm flex items-center gap-1">
+            <span class="material-symbols-outlined text-[14px]" data-icon="policy">policy</span>
+            IP Audit Required
+        </div>
+    </div>
+</section>
+
+<section class="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-12">
+    <div class="lg:col-span-2 glass-panel rounded-xl overflow-hidden flex flex-col">
+        <div class="p-6 border-b border-white/5 flex justify-between items-center">
+            <h2 class="font-headline-md text-headline-md text-primary">Catalog Module</h2>
+            <div class="flex gap-2">
+                <button class="bg-surface-container hover:bg-surface-container-high text-on-surface font-label-sm text-label-sm px-4 py-2 rounded-md transition-all">Export CSV</button>
+                <button class="bg-primary-container text-on-primary-container font-label-sm text-label-sm px-4 py-2 rounded-md transition-all font-bold">Add Track</button>
+            </div>
+        </div>
+        <div class="overflow-x-auto">
+            <table class="w-full text-left">
+                <thead class="bg-surface-container-lowest text-on-surface-variant font-label-sm text-label-sm uppercase tracking-wider">
+                    <tr>
+                        <th class="px-6 py-4 font-semibold">Song ID</th>
+                        <th class="px-6 py-4 font-semibold">Title</th>
+                        <th class="px-6 py-4 font-semibold">Release Date</th>
+                        <th class="px-6 py-4 font-semibold">Status</th>
+                        <th class="px-6 py-4 font-semibold text-right">Action</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-white/5">
+                    {% for cancion in canciones %}
+                    <tr class="hover:bg-white/5 transition-colors group">
+                        <td class="px-6 py-4 font-mono-sm text-on-surface-variant text-[13px]">TRK-{{ cancion.idcancion }}</td>
+                        <td class="px-6 py-4">
+                            <div class="flex items-center gap-3">
+                                <div class="w-10 h-10 rounded bg-white/10 overflow-hidden">
+                                    {% if cancion.album.urlportada %}
+                                        <img alt="Album Art" class="w-full h-full object-cover" src="{{ cancion.album.urlportada }}"/>
+                                    {% else %}
+                                        <div class="w-full h-full bg-surface-container flex items-center justify-center text-on-surface-variant text-xs">No img</div>
+                                    {% endif %}
+                                </div>
+                                <div>
+                                    <div class="font-body-md text-body-md flex items-center gap-2">
+                                        {{ cancion.titulocancion }}
+                                        {% if cancion.esexplicita %}
+                                            <span class="bg-error/20 text-error text-[10px] px-1 py-0.5 rounded uppercase font-bold">E</span>
+                                        {% endif %}
+                                    </div>
+                                    <div class="text-on-surface-variant text-[12px]">{{ cancion.album.tituloalbum|default:"Desconocido" }}</div>
+                                </div>
+                            </div>
+                        </td>
+                        <td class="px-6 py-4 text-on-surface-variant text-label-md">{{ cancion.album.fechalanzamiento|date:"M d, Y"|default:"---" }}</td>
+                        <td class="px-6 py-4">
+                            {% if cancion.estadopublicacion == 'Published' or cancion.estadopublicacion == 'Publicado' %}
+                                <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-bold uppercase bg-secondary/10 text-secondary border border-secondary/20">
+                                    <span class="w-1.5 h-1.5 rounded-full bg-secondary"></span> Publicado
+                                </span>
+                            {% else %}
+                                <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-bold uppercase bg-yellow-500/10 text-yellow-500 border border-yellow-500/20">
+                                    <span class="w-1.5 h-1.5 rounded-full bg-yellow-500"></span> {{ cancion.estadopublicacion|default:"Borrador" }}
+                                </span>
+                            {% endif %}
+                        </td>
+                        <td class="px-6 py-4 text-right">
+                            <a class="text-secondary hover:underline font-label-sm text-label-sm flex items-center justify-end gap-1" href="{{ cancion.spotifyurlapi|default:'#' }}">
+                                <span class="material-symbols-outlined text-[18px]" data-icon="link">link</span> View Spotify API
+                            </a>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="5" class="px-6 py-12 text-center text-on-surface-variant border-none">
+                            <span class="material-symbols-outlined text-4xl mb-3 opacity-50" data-icon="music_off">music_off</span>
+                            <div class="font-body-md text-on-surface">No hay tracks en el catálogo</div>
+                            <div class="text-sm mt-1">Conecta la base de datos o añade un nuevo track manualmente.</div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <div class="flex flex-col gap-8">
+        <div class="glass-panel rounded-xl overflow-hidden flex flex-col h-full">
+            <div class="p-6 border-b border-white/5 flex justify-between items-center bg-surface-container-low">
+                <h3 class="font-label-md text-label-md text-primary uppercase tracking-widest">User Access Audit</h3>
+                <span class="material-symbols-outlined text-on-surface-variant text-[20px]" data-icon="history">history</span>
+            </div>
+            <div class="p-4 flex flex-col gap-4">
+                <div class="flex items-center gap-3 p-3 rounded-lg bg-white/5 border border-white/5">
+                    <div class="w-2 h-2 rounded-full bg-error"></div>
+                    <div class="flex-1">
+                        <div class="font-label-sm text-label-sm text-on-surface">Unauthorized Login Attempt</div>
+                        <div class="text-[11px] text-on-surface-variant">Seoul, KR • 210.12.8.44</div>
+                    </div>
+                    <div class="text-[11px] text-on-surface-variant">2m ago</div>
+                </div>
+                <div class="flex items-center gap-3 p-3 rounded-lg bg-white/5 border border-white/5">
+                    <div class="w-2 h-2 rounded-full bg-secondary"></div>
+                    <div class="flex-1">
+                        <div class="font-label-sm text-label-sm text-on-surface">New Admin Credential</div>
+                        <div class="text-[11px] text-on-surface-variant">San Francisco, US • 192.168.1.1</div>
+                    </div>
+                    <div class="text-[11px] text-on-surface-variant">45m ago</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="glass-panel rounded-xl overflow-hidden flex flex-col">
+            <div class="p-6 border-b border-white/5 flex justify-between items-center bg-surface-container-low">
+                <h3 class="font-label-md text-label-md text-primary uppercase tracking-widest">Expiring Soon (5d)</h3>
+                <span class="material-symbols-outlined text-error text-[20px]" data-icon="timer">timer</span>
+            </div>
+            <div class="p-4 flex flex-col gap-2">
+                <div class="flex items-center justify-between p-3 rounded-lg bg-error/5 border border-error/20">
+                    <div>
+                        <div class="font-label-sm text-label-sm text-on-surface">Alex Thompson</div>
+                        <div class="text-[11px] text-on-surface-variant">Enterprise Plan</div>
+                    </div>
+                    <div class="text-error font-bold font-mono-sm text-[13px]">48h</div>
+                </div>
+                <div class="flex items-center justify-between p-3 rounded-lg bg-white/5 border border-white/5">
+                    <div>
+                        <div class="font-label-sm text-label-sm text-on-surface">Sarah Connor</div>
+                        <div class="text-[11px] text-on-surface-variant">Premium Yearly</div>
+                    </div>
+                    <div class="text-on-surface-variant font-mono-sm text-[13px]">4d</div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<section class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+    <div class="glass-panel p-8 rounded-xl">
+        <div class="flex justify-between items-end mb-8">
+            <div>
+                <h3 class="font-headline-md text-headline-md text-primary">Genre Performance</h3>
+                <p class="font-label-sm text-label-sm text-on-surface-variant">Market share based on stream count</p>
+            </div>
+            <div class="flex gap-1">
+                <span class="w-1 h-4 bg-secondary"></span>
+                <span class="w-1 h-6 bg-secondary/60"></span>
+                <span class="w-1 h-3 bg-secondary"></span>
+            </div>
+        </div>
+        <div class="h-64 flex items-end justify-between gap-2 relative">
+            <div class="flex-1 bg-gradient-to-t from-secondary/40 to-secondary h-[80%] rounded-t-sm group relative">
+                <div class="absolute -top-10 left-1/2 -translate-x-1/2 bg-surface p-1 rounded border border-white/10 opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap text-[10px]">Pop: 82%</div>
+            </div>
+            <div class="flex-1 bg-gradient-to-t from-secondary/40 to-secondary h-[65%] rounded-t-sm group relative">
+                <div class="absolute -top-10 left-1/2 -translate-x-1/2 bg-surface p-1 rounded border border-white/10 opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap text-[10px]">Electronic: 65%</div>
+            </div>
+            <div class="flex-1 bg-gradient-to-t from-secondary/40 to-secondary h-[45%] rounded-t-sm group relative"></div>
+            <div class="flex-1 bg-gradient-to-t from-secondary/40 to-secondary h-[90%] rounded-t-sm group relative"></div>
+            <div class="flex-1 bg-gradient-to-t from-secondary/40 to-secondary h-[30%] rounded-t-sm group relative"></div>
+            <div class="flex-1 bg-gradient-to-t from-secondary/40 to-secondary h-[55%] rounded-t-sm group relative"></div>
+            <div class="flex-1 bg-gradient-to-t from-secondary/40 to-secondary h-[75%] rounded-t-sm group relative"></div>
+            <div class="flex-1 bg-gradient-to-t from-secondary/40 to-secondary h-[40%] rounded-t-sm group relative"></div>
+            <div class="flex-1 bg-gradient-to-t from-secondary/40 to-secondary h-[60%] rounded-t-sm group relative"></div>
+            <div class="flex-1 bg-gradient-to-t from-secondary/40 to-secondary h-[85%] rounded-t-sm group relative"></div>
+        </div>
+        <div class="mt-4 flex justify-between text-[10px] text-on-surface-variant font-label-sm uppercase">
+            <span>Pop</span><span>Rock</span><span>Electronic</span><span>Jazz</span><span>Lo-Fi</span><span>Classical</span><span>Folk</span><span>Rap</span><span>Soul</span><span>Ambient</span>
+        </div>
+    </div>
+
+    <div class="glass-panel p-8 rounded-xl relative overflow-hidden">
+        <div class="absolute top-0 right-0 w-32 h-32 bg-secondary/5 blur-[100px]"></div>
+        <h3 class="font-headline-md text-headline-md text-primary mb-2">Impact of Active Promotions</h3>
+        <p class="font-label-sm text-label-sm text-on-surface-variant mb-8">Conversion via redemption codes</p>
+        <div class="h-64 relative">
+            <svg class="w-full h-full" preserveaspectratio="none" viewbox="0 0 100 100">
+                <defs>
+                    <lineargradient id="area-gradient" x1="0%" x2="0%" y1="0%" y2="100%">
+                        <stop offset="0%" style="stop-color:#45F3FF;stop-opacity:0.3"></stop>
+                        <stop offset="100%" style="stop-color:#45F3FF;stop-opacity:0"></stop>
+                    </lineargradient>
+                </defs>
+                <path d="M0 80 Q25 40 50 60 T100 20 V100 H0 Z" fill="url(#area-gradient)"></path>
+                <path d="M0 80 Q25 40 50 60 T100 20" fill="none" stroke="#45F3FF" stroke-width="2"></path>
+            </svg>
+            <div class="absolute top-10 left-[75%] flex flex-col items-center">
+                <div class="w-3 h-3 rounded-full bg-primary border-2 border-surface glow-cyan"></div>
+                <div class="mt-2 glass-panel px-3 py-1.5 rounded text-[12px] font-bold">+128% Peak</div>
+            </div>
+        </div>
+        <div class="mt-4 grid grid-cols-4 text-center">
+            <div>
+                <div class="font-headline-md text-headline-md text-primary">2.4k</div>
+                <div class="font-label-sm text-label-sm text-on-surface-variant uppercase">Redeemed</div>
+            </div>
+            <div>
+                <div class="font-headline-md text-headline-md text-primary">18%</div>
+                <div class="font-label-sm text-label-sm text-on-surface-variant uppercase">Conv Rate</div>
+            </div>
+            <div>
+                <div class="font-headline-md text-headline-md text-primary">$48k</div>
+                <div class="font-label-sm text-label-sm text-on-surface-variant uppercase">Value</div>
+            </div>
+            <div>
+                <div class="font-headline-md text-headline-md text-primary">12.1m</div>
+                <div class="font-label-sm text-label-sm text-on-surface-variant uppercase">Reach</div>
+            </div>
+        </div>
+    </div>
+</section>
+{% endblock %}

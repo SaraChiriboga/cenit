@@ -1,0 +1,40 @@
+{% extends "base.html" %}
+
+{% block title %}CÉNIT | Autenticación{% endblock %}
+
+{% block content %}
+<div class="fixed inset-0 bg-[#0B0C10] flex items-center justify-center p-4 z-50">
+    <div class="glass-panel w-full max-w-md p-8 rounded-xl relative overflow-hidden group">
+        <div class="absolute top-0 left-0 w-full h-[2px] bg-secondary"></div>
+        
+        <div class="text-center mb-8">
+            <h1 class="text-3xl font-bold text-primary tracking-wider mb-2">CÉNIT</h1>
+            <p class="text-on-surface-variant text-sm">Consola de Administración de Streaming</p>
+        </div>
+
+        <form method="post" class="flex flex-col gap-5">
+            {% csrf_token %}
+            
+            {% if form.errors %}
+                <p class="text-error text-xs bg-error/10 p-3 rounded border border-error/20">
+                    Usuario o contraseña incorrectos.
+                </p>
+            {% endif %}
+
+            <div>
+                <label class="block text-xs uppercase tracking-widest text-on-surface-variant mb-2">Usuario</label>
+                <input type="text" name="username" class="w-full bg-surface-container-low border border-outline-variant/30 rounded-lg px-4 py-2.5 text-on-surface focus:ring-2 focus:ring-secondary/50 focus:border-secondary outline-none transition-all" required>
+            </div>
+
+            <div>
+                <label class="block text-xs uppercase tracking-widest text-on-surface-variant mb-2">Contraseña</label>
+                <input type="password" name="password" class="w-full bg-surface-container-low border border-outline-variant/30 rounded-lg px-4 py-2.5 text-on-surface focus:ring-2 focus:ring-secondary/50 focus:border-secondary outline-none transition-all" required>
+            </div>
+
+            <button type="submit" class="w-full bg-primary-container text-on-primary-container font-bold py-3 rounded-lg transition-all hover:bg-secondary mt-2">
+                Iniciar Sesión
+            </button>
+        </form>
+    </div>
+</div>
+{% endblock %}

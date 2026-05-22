@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html class="dark" lang="en">
+<head>
+    <meta charset="utf-8"/>
+    <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+    <title>CÉNIT | {% block title %}Dashboard{% endblock %}</title>
+
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet"/>
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+
+    <style>
+        body { font-family: 'Inter', sans-serif; background-color: #0B0C10; }
+        .glass-panel { background: rgba(31, 40, 51, 0.8); backdrop-filter: blur(20px); border: 1px solid rgba(255, 255, 255, 0.05); }
+        .glow-cyan { box-shadow: 0 0 12px rgba(69, 243, 255, 0.15); }
+        .material-symbols-outlined { font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24; }
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: #0B0C10; }
+        ::-webkit-scrollbar-thumb { background: #1F2833; border-radius: 10px; }
+    </style>
+
+    <script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "surface-container-high": "#292a2e", "secondary": "#44e2d7", "surface": "#121317",
+                        "error": "#ffb4ab", "inverse-surface": "#e3e2e8", "on-secondary-fixed-variant": "#00504b",
+                        "surface-container-low": "#1a1b20", "on-tertiary": "#28313c", "surface-container-highest": "#343439",
+                        "surface-variant": "#343439", "tertiary-fixed-dim": "#bec7d6", "on-background": "#e3e2e8",
+                        "on-tertiary-fixed-variant": "#3e4753", "on-error": "#690005", "on-primary-fixed": "#002022",
+                        "surface-bright": "#38393e", "on-primary-container": "#006c72", "surface-tint": "#0cdbe7",
+                        "tertiary": "#f9faff", "on-surface": "#e3e2e8", "inverse-primary": "#00696f",
+                        "secondary-fixed": "#62f9ee", "error-container": "#93000a", "on-secondary-fixed": "#00201e",
+                        "on-primary": "#00363a", "surface-dim": "#121317", "secondary-fixed-dim": "#3cdcd1",
+                        "primary-container": "#45f3ff", "tertiary-fixed": "#dae3f2", "primary": "#ebfeff",
+                        "on-surface-variant": "#bac9ca", "on-tertiary-container": "#59626f", "on-tertiary-fixed": "#131c27",
+                        "background": "#121317", "outline-variant": "#3b494a", "on-secondary": "#003734",
+                        "tertiary-container": "#d5deed", "surface-container": "#1f1f24", "inverse-on-surface": "#2f3035",
+                        "surface-container-lowest": "#0d0e12", "outline": "#849395", "on-secondary-container": "#004c48",
+                        "on-primary-fixed-variant": "#004f54", "primary-fixed-dim": "#0cdbe7", "secondary-container": "#00c5bb",
+                        "on-error-container": "#ffdad6", "primary-fixed": "#75f5ff"
+                    },
+                    "fontFamily": {
+                        "headline-md": ["Inter"], "body-lg": ["Inter"], "body-md": ["Inter"], "headline-xl": ["Inter"],
+                        "label-md": ["Inter"], "label-sm": ["Inter"], "headline-lg": ["Inter"]
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+<body class="text-on-surface">
+
+    <aside class="fixed left-0 top-0 h-full w-[280px] bg-surface-container/80 backdrop-blur-xl border-r border-white/10 flex flex-col py-8 z-50">
+
+        <div class="px-8 mb-12">
+            <svg class="h-10 w-auto" width="200" height="60" viewBox="0 0 200 60" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M10 30L25 10L40 30L25 50L10 30Z" stroke="#45F3FF" stroke-width="2" fill="none"/>
+              <path d="M18 30L25 20L32 30L25 40L18 30Z" fill="#45F3FF"/>
+              <text x="55" y="42" fill="white" font-family="Inter, sans-serif" font-weight="800" font-size="28" letter-spacing="2">CÉNIT</text>
+            </svg>
+        </div>
+
+        <nav class="flex-1 flex flex-col gap-1">
+            <a class="flex items-center gap-4 text-primary bg-primary/5 border-l-4 border-secondary px-6 py-3 transition-all duration-300" href="#">
+                <span class="material-symbols-outlined" data-icon="subscriptions">subscriptions</span>
+                <span class="font-body-md text-body-md">Catalog</span>
+            </a>
+            <a class="flex items-center gap-4 text-on-surface-variant hover:text-on-surface px-6 py-3 transition-all duration-300 hover:bg-white/5" href="#">
+                <span class="material-symbols-outlined" data-icon="group">group</span>
+                <span class="font-body-md text-body-md">Users & Access</span>
+            </a>
+            <a class="flex items-center gap-4 text-on-surface-variant hover:text-on-surface px-6 py-3 transition-all duration-300 hover:bg-white/5" href="#">
+                <span class="material-symbols-outlined" data-icon="payments">payments</span>
+                <span class="font-body-md text-body-md">Subscriptions</span>
+            </a>
+            <a class="flex items-center gap-4 text-on-surface-variant hover:text-on-surface px-6 py-3 transition-all duration-300 hover:bg-white/5" href="#">
+                <span class="material-symbols-outlined" data-icon="leaderboard">leaderboard</span>
+                <span class="font-body-md text-body-md">Analytics</span>
+            </a>
+        </nav>
+
+        <div class="mt-auto px-6 border-t border-white/5 pt-8">
+            <div class="flex items-center gap-3 p-3 rounded-lg bg-surface-container-highest/40 mb-6">
+                <div class="w-10 h-10 rounded-full overflow-hidden bg-secondary/20 flex items-center justify-center">
+                    <span class="material-symbols-outlined text-secondary">smart_toy</span>
+                </div>
+                <div>
+                    <div class="font-label-md text-label-md text-on-surface">{{ request.user.username|default:"CENIT-SA"|upper }}</div>
+                    <div class="font-label-sm text-label-sm text-on-surface-variant">Admin Console</div>
+                </div>
+                <div class="ml-auto">
+                    <span class="material-symbols-outlined text-secondary text-[20px]" data-icon="verified">verified</span>
+                </div>
+            </div>
+
+            <div class="flex flex-col gap-2">
+                <button class="flex items-center gap-4 text-on-surface-variant hover:text-on-surface px-3 py-2 transition-all">
+                    <span class="material-symbols-outlined" data-icon="dark_mode">dark_mode</span>
+                    <span class="font-label-md text-label-md">Theme Settings</span>
+                </button>
+                <button class="flex items-center gap-4 text-on-surface-variant hover:text-on-surface px-3 py-2 transition-all">
+                    <span class="material-symbols-outlined" data-icon="help">help</span>
+                    <span class="font-label-md text-label-md">Support</span>
+                </button>
+            </div>
+        </div>
+    </aside>
+
+    <header class="fixed top-0 right-0 w-[calc(100%-280px)] h-16 bg-background/80 backdrop-blur-lg border-b border-white/5 flex justify-between items-center px-10 z-40">
+        <div class="flex items-center gap-4">
+            <div class="flex items-center gap-2 text-on-surface-variant font-label-md text-label-md">
+                <span>Dashboard</span>
+                <span class="material-symbols-outlined text-[16px]" data-icon="chevron_right">chevron_right</span>
+                <span class="text-primary font-bold">{% block section_name %}Operations Overview{% endblock %}</span>
+            </div>
+        </div>
+
+        <div class="flex items-center gap-8">
+            <div class="relative group">
+                <div class="absolute inset-y-0 left-3 flex items-center pointer-events-none">
+                    <span class="material-symbols-outlined text-on-surface-variant text-[20px]" data-icon="search">search</span>
+                </div>
+                <input class="bg-surface-container-low border border-outline-variant/30 rounded-full pl-10 pr-4 py-1.5 w-64 text-on-surface focus:ring-2 focus:ring-secondary/50 focus:border-secondary outline-none transition-all font-body-md text-body-md" placeholder="Search data... (⌘K)" type="text"/>
+            </div>
+            <div class="flex items-center gap-6 text-on-surface-variant">
+                <button class="relative hover:text-secondary transition-all">
+                    <span class="material-symbols-outlined" data-icon="notifications">notifications</span>
+                    <span class="absolute -top-1 -right-1 w-2 h-2 bg-secondary rounded-full"></span>
+                </button>
+                <button class="hover:text-secondary transition-all">
+                    <span class="material-symbols-outlined" data-icon="settings">settings</span>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <main class="ml-[280px] pt-24 px-10 pb-12">
+        {% block content %}
+        {% endblock %}
+    </main>
+
+    <script>
+        // Micro-interaction for sidebar links
+        document.querySelectorAll('aside nav a').forEach(link => {
+            link.addEventListener('click', (e) => {
+                document.querySelectorAll('aside nav a').forEach(l => {
+                    l.classList.remove('text-primary', 'bg-primary/5', 'border-l-4', 'border-secondary');
+                    l.classList.add('text-on-surface-variant', 'hover:text-on-surface', 'hover:bg-white/5');
+                });
+                link.classList.add('text-primary', 'bg-primary/5', 'border-l-4', 'border-secondary');
+                link.classList.remove('text-on-surface-variant', 'hover:text-on-surface', 'hover:bg-white/5');
+            });
+        });
+
+        // Command + K listener simulation
+        window.addEventListener('keydown', (e) => {
+            if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
+                e.preventDefault();
+                document.querySelector('input[type="text"]').focus();
+            }
+        });
+    </script>
+</body>
+</html>

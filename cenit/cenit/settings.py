@@ -66,10 +66,11 @@ ROOT_URLCONF = 'cenit.urls'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [],
+        'DIRS': [os.path.join(BASE_DIR, 'templates')], # <--- Crucial
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
+                'django.template.context_processors.debug',
                 'django.template.context_processors.request',
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
@@ -118,8 +119,14 @@ USE_I18N = True
 
 USE_TZ = True
 
+# Al loguearse, va directo al catálogo
+LOGIN_REDIRECT_URL = 'catalog_overview'
+
+# Si intenta entrar a una ruta protegida sin loguearse, lo manda al login personalizado
+LOGIN_URL = 'login'
 
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/6.0/howto/static-files/
 
 STATIC_URL = 'static/'
+STATICFILES_DIRS = [os.path.join(BASE_DIR, 'static')]
