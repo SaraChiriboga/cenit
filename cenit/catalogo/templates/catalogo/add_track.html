@@ -1,0 +1,102 @@
+{% extends "base.html" %}
+
+{% block title %}CÉNIT | Add Track{% endblock %}
+{% block section_name %}New Asset Creation{% endblock %}
+
+{% block content %}
+<div class="max-w-[800px] mx-auto animate-in fade-in slide-in-from-bottom-4 duration-700">
+    <div class="glass-panel rounded-xl p-8 border-white/5 relative z-10">
+        <form method="POST" class="space-y-6">
+            {% csrf_token %}
+
+            <div class="grid grid-cols-[200px_1fr] gap-8">
+                <div class="space-y-4">
+                    <label class="font-label-md text-on-surface/80">Cover Art</label>
+                    <div id="cover-preview" class="aspect-square w-full rounded-lg border-2 border-dashed border-white/10 bg-surface-container-low flex items-center justify-center overflow-hidden">
+                        <span class="material-symbols-outlined text-4xl text-on-surface-variant">photo_library</span>
+                    </div>
+                    <input id="urlportada" name="urlportada" type="text" placeholder="URL de imagen"
+                           class="w-full bg-surface-container-low border border-white/10 rounded-lg p-2 text-xs text-on-surface outline-none">
+                </div>
+
+                <div class="space-y-4">
+                    <div class="space-y-1">
+                        <label class="text-xs font-bold text-on-surface-variant uppercase">Song Title</label>
+                        <input id="song_title" name="titulocancion" required type="text"
+                               class="w-full bg-surface-container-low border border-white/10 rounded-lg py-3 px-4 outline-none focus:border-secondary">
+                    </div>
+
+                    <div class="space-y-1">
+                        <label class="text-xs font-bold text-on-surface-variant uppercase">Artist</label>
+                        <input id="artist_name" name="artista" type="text"
+                               class="w-full bg-surface-container-low border border-white/10 rounded-lg py-3 px-4 outline-none">
+                    </div>
+
+                    <button id="btn-search" type="button" class="w-full py-2 rounded-lg bg-surface-container-highest/50 border border-white/5 text-on-surface-variant hover:text-secondary transition-all flex items-center justify-center gap-2">
+                        <span class="material-symbols-outlined text-sm">search</span> Search Spotify
+                    </button>
+
+                    <div class="grid grid-cols-2 gap-4">
+                        <div class="space-y-1">
+                            <label class="text-xs font-bold text-on-surface-variant uppercase">Duration (sec)</label>
+                            <input id="duration" name="duracionseg" type="number" class="w-full bg-surface-container-low border border-white/10 rounded-lg py-3 px-4 outline-none">
+                        </div>
+                        <div class="space-y-1">
+                            <label class="text-xs font-bold text-on-surface-variant uppercase">Genre</label>
+                            <select name="genero" class="w-full bg-surface-container-low border border-white/10 rounded-lg py-3 px-4 outline-none">
+                                {% for genero in generos %}
+                                    <option value="{{ genero.idgenero }}">{{ genero.nombregenero }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="flex items-center justify-end gap-4 pt-6 border-t border-white/5">
+                <a href="{% url 'catalog_overview' %}" class="px-6 py-2.5 text-on-surface-variant hover:text-white">Cancel</a>
+                <button type="submit" class="px-8 py-2.5 rounded-lg bg-secondary text-background font-bold hover:bg-secondary/90 transition-all">
+                    Save Track
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<div id="results-modal" class="hidden absolute inset-0 bg-background/90 z-20 p-6 overflow-y-auto">
+    <h3 class="text-secondary font-bold mb-4">Selecciona la canción correcta:</h3>
+    <div id="results-list" class="space-y-3"></div>
+    <button onclick="document.getElementById('results-modal').classList.add('hidden')" class="mt-4 text-sm text-on-surface-variant">Cerrar</button>
+</div>
+
+<script>
+    document.getElementById('btn-search').addEventListener('click', async () => {
+    const q = document.getElementById('song_title').value + " " + document.getElementById('artist_name').value;
+    const list = document.getElementById('results-list');
+    const modal = document.getElementById('results-modal');
+
+    list.innerHTML = 'Buscando...';
+    modal.classList.remove('hidden');
+
+    const res = await fetch("{% url 'search_spotify_ajax' %}?q=" + encodeURIComponent(q));
+    const data = await res.json(); // Ahora data es una lista
+
+    list.innerHTML = '';
+    data.forEach(item => {
+        const div = document.createElement('div');
+        div.className = "flex items-center gap-3 p-3 bg-surface-container hover:bg-secondary/10 cursor-pointer rounded";
+        div.innerHTML = `<img src="${item.album_cover}" class="w-12 h-12 rounded">
+                         <div><div class="font-bold text-sm">${item.name}</div><div class="text-xs">${item.artist}</div></div>`;
+
+        div.onclick = () => {
+            document.getElementById('song_title').value = item.name;
+            document.getElementById('urlportada').value = item.album_cover;
+            document.getElementById('duration').value = item.duration;
+            document.getElementById('cover-preview').innerHTML = `<img src="${item.album_cover}">`;
+            modal.classList.add('hidden');
+        };
+        list.appendChild(div);
+    });
+});
+</script>
+{% endblock %}
