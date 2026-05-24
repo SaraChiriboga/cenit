@@ -17,6 +17,32 @@
         ::-webkit-scrollbar { width: 6px; }
         ::-webkit-scrollbar-track { background: #0B0C10; }
         ::-webkit-scrollbar-thumb { background: #1F2833; border-radius: 10px; }
+
+        /* Submenu animation */
+        .submenu {
+            overflow: hidden;
+            max-height: 0;
+            transition: max-height 0.3s ease-out, opacity 0.2s ease;
+            opacity: 0;
+        }
+        .submenu.open {
+            max-height: 400px;
+            opacity: 1;
+            transition: max-height 0.35s ease-in, opacity 0.25s ease;
+        }
+        .submenu-arrow {
+            transition: transform 0.3s ease;
+        }
+        .submenu-arrow.rotated {
+            transform: rotate(90deg);
+        }
+
+        /* Active submenu item */
+        .submenu-item.active {
+            color: #44e2d7;
+            background: rgba(68, 226, 215, 0.08);
+            border-left: 2px solid #44e2d7;
+        }
     </style>
 
     <script id="tailwind-config">
@@ -53,7 +79,11 @@
 </head>
 <body class="text-on-surface">
 
-    <aside class="fixed left-0 top-0 h-full w-[280px] bg-surface-container/80 backdrop-blur-xl border-r border-white/10 flex flex-col py-8 z-50">
+    {# ── LÓGICA DE SERVIDOR PARA DETERMINAR SI ESTAMOS EN EL CATÁLOGO ── #}
+    {% with url_name=request.resolver_match.url_name|default:'' %}
+    {% with catalog_urls="songs_overview artists_overview albums_overview genre_overview colabs_overview add_track" %}
+
+    <aside class="fixed left-0 top-0 h-full w-[280px] bg-surface-container/80 backdrop-blur-xl border-r border-white/10 flex flex-col py-8 z-50 overflow-y-auto">
 
         <div class="px-8 mb-12">
             <svg class="h-10 w-auto" width="200" height="60" viewBox="0 0 200 60" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -63,21 +93,83 @@
             </svg>
         </div>
 
-        <nav class="flex-1 flex flex-col gap-1">
-            <a class="flex items-center gap-4 text-primary bg-primary/5 border-l-4 border-secondary px-6 py-3 transition-all duration-300" href="#">
-                <span class="material-symbols-outlined" data-icon="subscriptions">subscriptions</span>
-                <span class="font-body-md text-body-md">Catalog</span>
-            </a>
-            <a class="flex items-center gap-4 text-on-surface-variant hover:text-on-surface px-6 py-3 transition-all duration-300 hover:bg-white/5" href="#">
-                <span class="material-symbols-outlined" data-icon="group">group</span>
+        <nav class="flex-1 flex flex-col gap-1 px-3">
+
+            <!-- ── CATALOG (con submenú desplegable) ── -->
+            <div>
+                {# Botón principal del acordeón: estilo activo si estamos en catálogo #}
+                <button id="catalog-toggle"
+                        class="w-full flex items-center gap-3 px-3 py-3 rounded-lg transition-all duration-200 group
+                               {% if url_name in catalog_urls %}
+                               text-primary bg-primary/5
+                               {% else %}
+                               text-on-surface-variant hover:text-on-surface hover:bg-white/5
+                               {% endif %}">
+                    <span class="material-symbols-outlined text-[20px]">subscriptions</span>
+                    <span class="font-body-md text-body-md flex-1 text-left">Catalog</span>
+                    <span class="material-symbols-outlined text-[16px] submenu-arrow text-on-surface-variant
+                          {% if url_name in catalog_urls %}rotated{% endif %}"
+                          id="catalog-arrow">chevron_right</span>
+                </button>
+
+                {# Submenú: añadimos clase 'open' condicionalmente #}
+                <div class="submenu {% if url_name in catalog_urls %}open{% endif %}" id="catalog-submenu">
+                    <div class="ml-4 pl-3 border-l border-white/10 mt-1 flex flex-col gap-0.5 pb-2">
+
+                        <a href="{% url 'songs_overview' %}"
+                           class="submenu-item px-3 py-2 rounded-r-lg text-sm transition-all
+                           {% if 'songs_overview' in request.resolver_match.url_name or 'add_track' in request.resolver_match.url_name or 'edit_track' in request.resolver_match.url_name %}
+                               active
+                           {% else %}
+                               text-on-surface-variant hover:text-on-surface hover:bg-white/5
+                           {% endif %}">
+                            <span class="material-symbols-outlined text-[16px]">music_note</span>
+                           Canciones
+                        </a>
+
+                        <a href="{% url 'artists_overview' %}"
+                           class="submenu-item flex items-center gap-3 px-3 py-2 rounded-r-lg text-sm transition-all duration-150
+                                  {% if request.resolver_match.url_name == 'artists_overview' %}active{% else %}text-on-surface-variant hover:text-on-surface hover:bg-white/5{% endif %}">
+                            <span class="material-symbols-outlined text-[16px]">person</span>
+                            Artistas
+                        </a>
+
+                        <a href="{% url 'albums_overview' %}"
+                           class="submenu-item flex items-center gap-3 px-3 py-2 rounded-r-lg text-sm transition-all duration-150
+                                  {% if request.resolver_match.url_name == 'albums_overview' %}active{% else %}text-on-surface-variant hover:text-on-surface hover:bg-white/5{% endif %}">
+                            <span class="material-symbols-outlined text-[16px]">album</span>
+                            Álbumes
+                        </a>
+
+                        <a href="{% url 'genre_overview' %}"
+                           class="submenu-item flex items-center gap-3 px-3 py-2 rounded-r-lg text-sm transition-all duration-150
+                                  {% if request.resolver_match.url_name == 'genre_overview' %}active{% else %}text-on-surface-variant hover:text-on-surface hover:bg-white/5{% endif %}">
+                            <span class="material-symbols-outlined text-[16px]">category</span>
+                            Géneros
+                        </a>
+
+                        <a href="{% url 'colabs_overview' %}"
+                           class="submenu-item flex items-center gap-3 px-3 py-2 rounded-r-lg text-sm transition-all duration-150
+                                  {% if request.resolver_match.url_name == 'colabs_overview' %}active{% else %}text-on-surface-variant hover:text-on-surface hover:bg-white/5{% endif %}">
+                            <span class="material-symbols-outlined text-[16px]">group_work</span>
+                            Colaboraciones
+                        </a>
+
+                    </div>
+                </div>
+            </div>
+
+            <!-- ── OTHER MODULES ── -->
+            <a class="flex items-center gap-3 text-on-surface-variant hover:text-on-surface px-3 py-3 rounded-lg transition-all duration-200 hover:bg-white/5" href="#">
+                <span class="material-symbols-outlined text-[20px]">group</span>
                 <span class="font-body-md text-body-md">Users & Access</span>
             </a>
-            <a class="flex items-center gap-4 text-on-surface-variant hover:text-on-surface px-6 py-3 transition-all duration-300 hover:bg-white/5" href="#">
-                <span class="material-symbols-outlined" data-icon="payments">payments</span>
+            <a class="flex items-center gap-3 text-on-surface-variant hover:text-on-surface px-3 py-3 rounded-lg transition-all duration-200 hover:bg-white/5" href="#">
+                <span class="material-symbols-outlined text-[20px]">payments</span>
                 <span class="font-body-md text-body-md">Subscriptions</span>
             </a>
-            <a class="flex items-center gap-4 text-on-surface-variant hover:text-on-surface px-6 py-3 transition-all duration-300 hover:bg-white/5" href="#">
-                <span class="material-symbols-outlined" data-icon="leaderboard">leaderboard</span>
+            <a class="flex items-center gap-3 text-on-surface-variant hover:text-on-surface px-3 py-3 rounded-lg transition-all duration-200 hover:bg-white/5" href="#">
+                <span class="material-symbols-outlined text-[20px]">leaderboard</span>
                 <span class="font-body-md text-body-md">Analytics</span>
             </a>
         </nav>
@@ -92,46 +184,45 @@
                     <div class="font-label-sm text-label-sm text-on-surface-variant">Admin Console</div>
                 </div>
                 <div class="ml-auto">
-                    <span class="material-symbols-outlined text-secondary text-[20px]" data-icon="verified">verified</span>
+                    <span class="material-symbols-outlined text-secondary text-[20px]">verified</span>
                 </div>
             </div>
 
             <div class="flex flex-col gap-2">
                 <button class="flex items-center gap-4 text-on-surface-variant hover:text-on-surface px-3 py-2 transition-all">
-                    <span class="material-symbols-outlined" data-icon="dark_mode">dark_mode</span>
+                    <span class="material-symbols-outlined">dark_mode</span>
                     <span class="font-label-md text-label-md">Theme Settings</span>
                 </button>
                 <button class="flex items-center gap-4 text-on-surface-variant hover:text-on-surface px-3 py-2 transition-all">
-                    <span class="material-symbols-outlined" data-icon="help">help</span>
+                    <span class="material-symbols-outlined">help</span>
                     <span class="font-label-md text-label-md">Support</span>
                 </button>
             </div>
         </div>
     </aside>
 
+    <!-- ── TOPBAR ── -->
     <header class="fixed top-0 right-0 w-[calc(100%-280px)] h-16 bg-background/80 backdrop-blur-lg border-b border-white/5 flex justify-between items-center px-10 z-40">
-        <div class="flex items-center gap-4">
-            <div class="flex items-center gap-2 text-on-surface-variant font-label-md text-label-md">
-                <span>Dashboard</span>
-                <span class="material-symbols-outlined text-[16px]" data-icon="chevron_right">chevron_right</span>
-                <span class="text-primary font-bold">{% block section_name %}Operations Overview{% endblock %}</span>
-            </div>
+        <div class="flex items-center gap-2 text-on-surface-variant font-label-md text-label-md">
+            {% block breadcrumb %}
+            <a href="/" class="hover:text-primary transition-colors">Dashboard</a>
+            {% endblock %}
         </div>
 
         <div class="flex items-center gap-8">
             <div class="relative group">
                 <div class="absolute inset-y-0 left-3 flex items-center pointer-events-none">
-                    <span class="material-symbols-outlined text-on-surface-variant text-[20px]" data-icon="search">search</span>
+                    <span class="material-symbols-outlined text-on-surface-variant text-[20px]">search</span>
                 </div>
                 <input class="bg-surface-container-low border border-outline-variant/30 rounded-full pl-10 pr-4 py-1.5 w-64 text-on-surface focus:ring-2 focus:ring-secondary/50 focus:border-secondary outline-none transition-all font-body-md text-body-md" placeholder="Search data... (⌘K)" type="text"/>
             </div>
             <div class="flex items-center gap-6 text-on-surface-variant">
                 <button class="relative hover:text-secondary transition-all">
-                    <span class="material-symbols-outlined" data-icon="notifications">notifications</span>
+                    <span class="material-symbols-outlined">notifications</span>
                     <span class="absolute -top-1 -right-1 w-2 h-2 bg-secondary rounded-full"></span>
                 </button>
                 <button class="hover:text-secondary transition-all">
-                    <span class="material-symbols-outlined" data-icon="settings">settings</span>
+                    <span class="material-symbols-outlined">settings</span>
                 </button>
             </div>
         </div>
@@ -143,25 +234,30 @@
     </main>
 
     <script>
-        // Micro-interaction for sidebar links
-        document.querySelectorAll('aside nav a').forEach(link => {
-            link.addEventListener('click', (e) => {
-                document.querySelectorAll('aside nav a').forEach(l => {
-                    l.classList.remove('text-primary', 'bg-primary/5', 'border-l-4', 'border-secondary');
-                    l.classList.add('text-on-surface-variant', 'hover:text-on-surface', 'hover:bg-white/5');
+        document.addEventListener("DOMContentLoaded", function() {
+            const toggle = document.getElementById('catalog-toggle');
+            const submenu = document.getElementById('catalog-submenu');
+            const arrow = document.getElementById('catalog-arrow');
+
+            if (toggle && submenu && arrow) {
+                toggle.addEventListener('click', () => {
+                    submenu.classList.toggle('open');
+                    arrow.classList.toggle('rotated');
                 });
-                link.classList.add('text-primary', 'bg-primary/5', 'border-l-4', 'border-secondary');
-                link.classList.remove('text-on-surface-variant', 'hover:text-on-surface', 'hover:bg-white/5');
-            });
+            }
         });
 
-        // Command + K listener simulation
+        // ── ⌘K shortcut ──
         window.addEventListener('keydown', (e) => {
             if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
                 e.preventDefault();
-                document.querySelector('input[type="text"]').focus();
+                const searchInput = document.querySelector('input[placeholder*="Search"]');
+                if (searchInput) searchInput.focus();
             }
         });
     </script>
+
+    {% endwith %}
+    {% endwith %}
 </body>
 </html>

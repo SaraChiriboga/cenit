@@ -1,7 +1,15 @@
 {% extends "base.html" %}
 
-{% block title %}CÉNIT | Agregar Canción{% endblock %}
-
+{% block title %} Agregar Canción{% endblock %}
+{% block breadcrumb %}
+<a href="/" class="hover:text-primary transition-colors">Dashboard</a>
+<span class="material-symbols-outlined text-[16px] mx-1">chevron_right</span>
+<span class="text-on-surface-variant">Catalog</span>
+<span class="material-symbols-outlined text-[16px] mx-1">chevron_right</span>
+<span class="text-primary font-semibold">Canciones</span>
+<span class="material-symbols-outlined text-[16px] mx-1">chevron_right</span>
+<span class="text-primary font-semibold">Agregar Canción</span>
+{% endblock %}
 {% block content %}
 <style>
     #fixed-bg {
@@ -80,6 +88,86 @@
 
     /* Logo Spotify SVG inline */
     .spotify-logo { width: 20px; height: 20px; flex-shrink: 0; }
+
+    /* Forzar el estilo de borde en el foco para tu buscador */
+    #search_input:focus {
+        outline: none !important;
+        border: none !important;
+        box-shadow: none !important; /* Elimina sombras por defecto */
+    }
+
+    /* Asegurar el borde aquamarina en el contenedor padre si es necesario */
+    .search-container-custom:focus-within {
+        border: 1px solid #2DD4BF !important;
+        box-shadow: 0 0 0 2px rgba(45, 212, 191, 0.2) !important;
+    }
+
+    /* Eliminar estilos por defecto del sistema */
+    input[type="checkbox"] {
+        appearance: none;
+        -webkit-appearance: none;
+        -moz-appearance: none;
+        width: 1.5rem;
+        height: 1.5rem;
+        border: 2px solid rgba(255, 255, 255, 0.2);
+        border-radius: 0.4rem;
+        cursor: pointer;
+        position: relative;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        transition: all 0.2s;
+        background-color: transparent;
+    }
+
+    /* Estado marcado: Fondo aquamarina */
+    input[type="checkbox"]:checked {
+        background-color: #2DD4BF !important;
+        border-color: #2DD4BF !important;
+    }
+
+    /* El check blanco (evita que se superponga el check nativo) */
+    input[type="checkbox"]:checked::after {
+        color: #0B0C10; /* Color del tick */
+        font-weight: 900;
+        font-size: 1rem;
+    }
+
+    /* Aplicar estilo turquesa a todos los inputs y selects al hacer clic */
+    input:not(#search_input):focus,
+    select:focus,
+    textarea:focus {
+        border-color: #2DD4BF !important;
+        box-shadow: 0 0 0 2px rgba(45, 212, 191, 0.3) !important;
+        outline: none !important;
+    }
+
+    .error-link { color: #FFB4AB !important; text-decoration: underline; font-weight: bold; cursor: pointer; }
+    .status-msg { font-size: 0.75rem; margin-top: 0.5rem; color: rgba(255, 255, 255, 0.6); min-height: 1rem; }
+
+    select {
+    appearance: none;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
+    background-repeat: no-repeat;
+    background-position: right 1rem center;
+    background-size: 1.2em;
+    padding-right: 2.5rem !important; /* Espacio para que el texto no choque con la flecha */
+    cursor: pointer;
+}
+
+/* Efecto al pasar el mouse */
+select:hover {
+    border-color: rgba(45, 212, 191, 0.5) !important;
+}
+
+/* Asegurar que el texto dentro sea legible */
+select option {
+    background-color: #1A1B20;
+    color: white;
+    padding: 10px;
+}
 </style>
 
 <div id="fixed-bg"></div>
@@ -155,15 +243,18 @@
                     </div>
                     <div>
                         <label class="block text-xs font-bold text-white/60 uppercase mb-2">Álbum</label>
-                        <select name="album" class="w-full bg-black/30 border border-white/10 rounded-xl p-4 outline-none">
+                        <select name="album" id="album-select" class="w-full bg-black/30 border border-white/10 rounded-xl p-4 outline-none">
+                            <option value="">Seleccione un álbum</option>
                             {% for album in albumes %}<option value="{{ album.idalbum }}">{{ album.tituloalbum }}</option>{% endfor %}
                         </select>
+                        <div id="album-msg" class="status-msg"></div>
                     </div>
                     <div>
                         <label class="block text-xs font-bold text-white/60 uppercase mb-2">Género</label>
-                        <select name="genero" class="w-full bg-black/30 border border-white/10 rounded-xl p-4 outline-none">
+                        <select name="genero" id="genero-select" class="w-full bg-black/30 border border-white/10 rounded-xl p-4 outline-none">
                             {% for genero in generos %}<option value="{{ genero.idgenero }}">{{ genero.nombregenero }}</option>{% endfor %}
                         </select>
+                        <div id="genero-msg" class="status-msg"></div>
                     </div>
                     <div>
                         <label class="block text-xs font-bold text-white/60 uppercase mb-2">Duración (seg)</label>
@@ -290,12 +381,12 @@
     });
 
     document.getElementById('btn-search').onclick = async () => {
-        const q    = document.getElementById('search_input').value;
+        const q = document.getElementById('search_input').value;
         const list = document.getElementById('results-list');
         list.innerHTML = '<p class="text-white/50 text-center py-4">Buscando...</p>';
         document.getElementById('results-modal').classList.remove('hidden');
 
-        const res  = await fetch("{% url 'search_spotify_ajax' %}?q=" + encodeURIComponent(q));
+        const res = await fetch("{% url 'search_spotify_ajax' %}?q=" + encodeURIComponent(q));
         const data = await res.json();
 
         list.innerHTML = '';
@@ -308,20 +399,90 @@
                     <div class="font-bold text-white truncate">${item.name}</div>
                     <div class="text-sm text-secondary truncate">${item.artist}</div>
                     ${item.preview_url
-                        ? '<div class="text-xs text-white/30 mt-0.5">▶ Preview disponible</div>'
-                        : '<div class="text-xs text-white/20 mt-0.5">Sin preview</div>'}
+                ? '<div class="text-xs text-white/30 mt-0.5">▶ Preview disponible</div>'
+                : '<div class="text-xs text-white/20 mt-0.5">Sin preview</div>'}
                 </div>`;
-            div.onclick = () => {
+            div.onclick = async () => {
                 document.getElementById('titulocancion').value = item.name;
-                document.getElementById('artist_name').value  = item.artist;
-                document.getElementById('urlportada').value   = item.album_cover;
-                document.getElementById('duracionseg').value  = item.duration;
+                document.getElementById('artist_name').value = item.artist;
+                document.getElementById('urlportada').value = item.album_cover;
+                document.getElementById('duracionseg').value = item.duration;
                 applyStyles(item.album_cover);
                 loadPreview(item.preview_url, item.name, item.artist);
+
+                // 1. Intentar autoselección
+                const albumEncontrado = autoSelect('album-select', item.album_name);
+
+                // 2. Manejo de Álbum
+                if (!albumEncontrado) {
+                    // Ponemos el select en blanco (el index 0, si es el de "Seleccione...")
+                    document.getElementById('album-select').selectedIndex = 0;
+                    // Lanzamos el aviso
+                    await checkIntegrity('album', item.album_name);
+                } else {
+                    document.getElementById('album-msg').innerHTML = '';
+                }
+
+                // 2. Manejo de Género
+                if (item.genre && item.genre.trim() !== "") {
+                    const generoEncontrado = autoSelect('genero-select', item.genre);
+                    if (!generoEncontrado) {
+                        await checkIntegrity('genero', item.genre);
+                    } else {
+                        document.getElementById('genero-msg').innerHTML = '';
+                    }
+                } else {
+                    // Si viene vacío o es [], no validamos ni mostramos error,
+                    // solo reseteamos el select para que tú elijas
+                    document.getElementById('genero-select').selectedIndex = 0;
+                    document.getElementById('genero-msg').innerHTML = '<span class="text-xs text-white/40 italic">Género no disponible, selecciona manualmente.</span>';
+                }
+
                 document.getElementById('results-modal').classList.add('hidden');
             };
+
             list.appendChild(div);
         });
-    };
+    }
+
+    function autoSelect(selectId, valueToFind) {
+        const select = document.getElementById(selectId);
+        if (!select) return false;
+
+        // Intentar encontrar el match
+        let found = false;
+        for (let i = 0; i < select.options.length; i++) {
+            if (select.options[i].text.trim().toLowerCase() === valueToFind.trim().toLowerCase()) {
+                select.selectedIndex = i;
+                found = true;
+                break;
+            }
+        }
+
+        // SI NO LO ENCUENTRA: Resetear a vacío
+        if (!found) {
+            select.selectedIndex = 0; // O la opción que sea tu "vacío" o "seleccionar"
+            // Si tu primer option es el de "Seleccionar...", el índice 0 lo pone ahí.
+        }
+
+        return found;
+    }
+
+    // Corrección de la validación (usando data.existe)
+    async function checkIntegrity(tipo, nombre) {
+        const msgContainer = document.getElementById(`${tipo}-msg`);
+        if (!msgContainer) return;
+        msgContainer.innerHTML = '';
+        if (!nombre) return;
+
+        const res = await fetch("{% url 'check_existence' %}?tipo=" + encodeURIComponent(tipo) + "&nombre=" + encodeURIComponent(nombre));
+        const data = await res.json();
+
+        // AQUÍ ESTABA EL ERROR: data.existe (como lo definiste en views.py)
+        if (!data.existe) {
+            let createUrl = tipo === 'album' ? "{% url 'album_add' %}" : "{% url 'genero_add' %}";
+            msgContainer.innerHTML = `<div class="text-red-400 text-xs mt-1">⚠️ "${nombre}" no existe. <a href="${createUrl}?nombre=${encodeURIComponent(nombre)}" class="error-link" target="_blank">Crear ${tipo}</a></div>`;
+        }
+    }
 </script>
 {% endblock %}

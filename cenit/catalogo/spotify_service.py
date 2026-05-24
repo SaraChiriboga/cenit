@@ -48,22 +48,52 @@ class SpotifyClient:
         results = []
 
         for t in tracks:
-            # Preview de Deezer usando nombre + artista
+            # Obtener el nombre del álbum (directamente disponible)
+            album_name = t['album']['name']
+
+            # Obtener el género del artista (llamada extra a Spotify)
+            artist_id = t['artists'][0]['id']
+            genre = self._get_artist_genres(artist_id)
+
+            # Preview de Deezer
             preview = self._get_deezer_preview(
                 t['name'],
                 t['artists'][0]['name']
             )
+
             results.append({
                 'id': t['id'],
                 'name': t['name'],
                 'artist': t['artists'][0]['name'],
+                'album_name': album_name,  # ← NUEVO
+                'genre': genre,  # ← NUEVO
                 'album_cover': t['album']['images'][1]['url'] if t['album']['images'] else None,
                 'spotify_url': t['external_urls']['spotify'],
                 'duration': round(t['duration_ms'] / 1000),
-                'preview_url': preview,  # viene de Deezer
+                'preview_url': preview,
             })
 
         return results
+
+    def _get_artist_genres(self, artist_id):
+        """Retorna el primer género del artista, o cadena vacía si no hay."""
+        if not self.token:
+            return ""
+
+        url = f"https://api.spotify.com/v1/artists/{artist_id}"
+        headers = {"Authorization": f"Bearer {self.token}"}
+
+        try:
+            response = requests.get(url, headers=headers, timeout=3)
+            print(f"DEBUG: Buscando género para ID {artist_id}, status: {response.status_code}")
+            if response.status_code == 200:
+                genres = response.json().get('genres', [])
+                print(f"DEBUG: Géneros encontrados: {genres}")
+                return genres[0] if genres else ""
+            return ""
+        except Exception:
+            pass
+        return ""
 
     def _get_deezer_preview(self, name, artist):
         try:

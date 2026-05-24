@@ -1,0 +1,99 @@
+{% extends "base.html" %}
+
+{% block title %}Artistas{% endblock %}
+
+{% block breadcrumb %}
+<a href="/" class="hover:text-primary transition-colors">Dashboard</a>
+<span class="material-symbols-outlined text-[16px] mx-1">chevron_right</span>
+<span class="text-on-surface-variant">Catalog</span>
+<span class="material-symbols-outlined text-[16px] mx-1">chevron_right</span>
+<span class="text-primary font-semibold">Artistas</span>
+{% endblock %}
+
+{% block content %}
+<section class="mb-12">
+    <div class="glass-panel rounded-xl overflow-hidden flex flex-col">
+
+        <div class="p-6 border-b border-white/5 flex flex-col md:flex-row justify-between items-center gap-4">
+            <div class="flex items-center gap-6 w-full md:w-auto">
+                <h2 class="font-headline-md text-headline-md text-primary shrink-0">Artistas</h2>
+                <form method="GET" action="" class="relative flex-1 md:w-80">
+                    <div class="absolute inset-y-0 left-3 flex items-center pointer-events-none">
+                        <span class="material-symbols-outlined text-on-surface-variant text-[18px]">search</span>
+                    </div>
+                    <input name="q" value="{{ query }}" class="w-full bg-surface-container border border-outline-variant/20 rounded-md pl-10 pr-4 py-2 text-on-surface focus:ring-2 focus:ring-secondary/50 focus:border-secondary outline-none transition-all font-body-md text-body-md placeholder:text-on-surface-variant/50" placeholder="Buscar artistas..." type="text"/>
+                </form>
+            </div>
+            <div class="flex gap-2 shrink-0">
+                <a href="{% url 'artista_add' %}" class="bg-primary-container text-on-primary-container font-label-sm text-label-sm px-4 py-2 rounded-md transition-all font-bold">
+                    + Nuevo Artista
+                </a>
+            </div>
+        </div>
+
+        <div class="overflow-x-auto">
+            <table class="w-full text-left">
+                <thead class="bg-surface-container-lowest text-on-surface-variant font-label-sm text-label-sm uppercase tracking-wider">
+                    <tr>
+                        <th class="px-6 py-4 font-semibold">ID</th>
+                        <th class="px-6 py-4 font-semibold">Nombre Artístico</th>
+                        <th class="px-6 py-4 font-semibold">País</th>
+                        <th class="px-6 py-4 font-semibold">Estado</th>
+                        <th class="px-6 py-4 font-semibold">Registro</th>
+                        <th class="px-6 py-4 font-semibold text-right">Acciones</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-white/5">
+                    {% for artista in artistas %}
+                    <tr class="hover:bg-white/5 transition-colors">
+                        <td class="px-6 py-4 font-mono text-on-surface-variant text-[13px]">ART-{{ artista.idartista }}</td>
+                        <td class="px-6 py-4">
+                            <div class="flex items-center gap-3">
+                                <div class="w-9 h-9 rounded-full bg-secondary/20 flex items-center justify-center shrink-0">
+                                    <span class="material-symbols-outlined text-secondary text-[18px]">person</span>
+                                </div>
+                                <span class="font-medium text-on-surface">{{ artista.nombreartistico }}</span>
+                            </div>
+                        </td>
+                        <td class="px-6 py-4 text-on-surface-variant text-sm">{{ artista.paisorigen }}</td>
+                        <td class="px-6 py-4">
+                            {% if artista.estadoactivo == 'Vigente' %}
+                                <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-bold uppercase bg-secondary/10 text-secondary border border-secondary/20">
+                                    <span class="w-1.5 h-1.5 rounded-full bg-secondary"></span> Vigente
+                                </span>
+                            {% else %}
+                                <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-bold uppercase bg-white/5 text-on-surface-variant border border-white/10">
+                                    <span class="w-1.5 h-1.5 rounded-full bg-on-surface-variant"></span> {{ artista.estadoactivo }}
+                                </span>
+                            {% endif %}
+                        </td>
+                        <td class="px-6 py-4 text-on-surface-variant text-sm">{{ artista.fecharegistro|date:"M d, Y" }}</td>
+                        <td class="px-6 py-4">
+                            <div class="flex items-center justify-end gap-2">
+                                <a href="{% url 'artista_edit' artista.idartista %}" class="p-2 text-on-surface-variant hover:text-secondary transition-colors" title="Editar">
+                                    <span class="material-symbols-outlined text-[20px]">edit</span>
+                                </a>
+                                <a href="{% url 'artista_delete' artista.idartista %}" class="p-2 text-on-surface-variant hover:text-error transition-colors" title="Eliminar">
+                                    <span class="material-symbols-outlined text-[20px]">delete</span>
+                                </a>
+                            </div>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="6" class="px-6 py-12 text-center text-on-surface-variant">
+                            <span class="material-symbols-outlined text-4xl mb-3 opacity-50 block">person_off</span>
+                            <div class="font-body-md text-on-surface">No hay artistas registrados</div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <div class="p-4 border-t border-white/5 flex justify-between items-center text-on-surface-variant font-label-sm text-label-sm">
+            <div>{{ artistas.count }} artista{{ artistas.count|pluralize:"s" }}</div>
+        </div>
+    </div>
+</section>
+{% endblock %}
