@@ -92,23 +92,23 @@
 
                         <td class="px-6 py-4">
                             <div class="flex items-center justify-end gap-2">
-                                {% if cancion.spotifyurlapi %}
-                                    <a href="{{ cancion.spotifyurlapi }}" target="_blank" class="p-2 text-on-surface-variant hover:text-primary transition-colors" title="Ver en Spotify">
-                                        <span class="material-symbols-outlined text-[20px]">visibility</span>
-                                    </a>
-                                {% else %}
-                                    <a href="{% url 'sync_spotify_track' cancion.idcancion %}" class="p-2 text-on-surface-variant hover:text-secondary transition-colors" title="Sincronizar Spotify">
-                                        <span class="material-symbols-outlined text-[20px]">sync</span>
-                                    </a>
-                                {% endif %}
+                                <a href="{% url 'read_track' cancion.idcancion %}"
+                                   class="p-2 text-on-surface-variant hover:text-primary transition-colors"
+                                   title="View details">
+                                    <span class="material-symbols-outlined text-[20px]">visibility</span>
+                                </a>
 
-                                <a href="#" class="p-2 text-on-surface-variant hover:text-secondary transition-colors" title="Editar">
+                                <a href="{% url 'edit_track' cancion.idcancion %}"
+                                   class="p-2 text-on-surface-variant hover:text-secondary transition-colors"
+                                   title="Edit">
                                     <span class="material-symbols-outlined text-[20px]">edit</span>
                                 </a>
 
-                                <a href="#" class="p-2 text-on-surface-variant hover:text-error transition-colors" title="Eliminar">
+                                <button onclick="deleteTrack('{{ cancion.idcancion }}')"
+                                        class="p-2 text-on-surface-variant hover:text-error transition-colors"
+                                        title="Delete">
                                     <span class="material-symbols-outlined text-[20px]">delete</span>
-                                </a>
+                                </button>
                             </div>
                         </td>
                     </tr>

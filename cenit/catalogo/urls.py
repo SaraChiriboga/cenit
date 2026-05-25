@@ -8,6 +8,9 @@ urlpatterns = [
     path('api/search-spotify/', views.search_spotify_ajax, name='search_spotify_ajax'),
     path('api/check-existence/', views.check_existence, name='check_existence'),
     path('canciones/add/', views.add_track_ajax, name='add_track'),
+    path('canciones/<int:pk>/edit/', views.edit_track, name='edit_track'),
+    path('canciones/<int:pk>/delete/', views.delete_track, name='delete_track'),
+    path('canciones/<int:pk>/', views.read_track, name='read_track'),
 
     # ── Artistas ──
     path('artistas/', views.artista_list, name='artists_overview'),

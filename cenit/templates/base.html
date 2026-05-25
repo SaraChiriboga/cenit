@@ -118,7 +118,7 @@
 
                         <a href="{% url 'songs_overview' %}"
                            class="submenu-item px-3 py-2 rounded-r-lg text-sm transition-all
-                           {% if 'songs_overview' in request.resolver_match.url_name or 'add_track' in request.resolver_match.url_name or 'edit_track' in request.resolver_match.url_name %}
+                           {% if 'songs_overview' in request.resolver_match.url_name or 'add_track' in request.resolver_match.url_name or 'edit_track' in request.resolver_match.url_name or 'read_track' in request.resolver_match.url_name or 'delete_track' in request.resolver_match.url_name%}
                                active
                            {% else %}
                                text-on-surface-variant hover:text-on-surface hover:bg-white/5

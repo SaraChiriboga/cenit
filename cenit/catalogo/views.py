@@ -263,3 +263,42 @@ def colaboracion_delete(request, pk):
         messages.success(request, "Colaboración eliminada.")
         return redirect('colaboracion_list')
     return render(request, 'catalogo/confirm_delete.html', {'objeto': colaboracion, 'tipo': 'colaboración'})
+
+@login_required
+def edit_track(request, pk):
+    cancion = get_object_or_404(Cancion, idcancion=pk)
+    mode = request.GET.get('mode', 'view') # Default a view
+
+    if request.method == 'POST':
+        # Actualización de datos
+        cancion.titulocancion = request.POST.get('titulocancion')
+        cancion.duracionseg = request.POST.get('duracionseg')
+        cancion.esexplicita = request.POST.get('esexplicita') == 'on'
+        cancion.save()
+        messages.success(request, "Track updated successfully.")
+        return redirect('songs_overview')
+
+    return render(request, 'catalogo/add_track.html', {
+        'cancion': cancion,
+        'mode': mode,
+        'albumes': Album.objects.all(),
+        'generos': Genero.objects.all(),
+    })
+
+@login_required
+@csrf_exempt
+def delete_track(request, pk):
+    if request.method == 'POST':
+        cancion = get_object_or_404(Cancion, idcancion=pk)
+        cancion.delete()
+        return JsonResponse({'status': 'success', 'message': 'Track deleted successfully.'})
+    return JsonResponse({'status': 'error', 'message': 'Invalid method.'}, status=405)
+
+
+@login_required
+def read_track(request, pk):
+    cancion = get_object_or_404(Cancion.objects.select_related('album__artista'), idcancion=pk)
+
+    return render(request, 'catalogo/read_track.html', {
+        'cancion': cancion
+    })

@@ -1,0 +1,259 @@
+{% extends "base.html" %}
+
+{% block title %}Detalle de Canción{% endblock %}
+
+{% block breadcrumb %}
+<a href="/" class="hover:text-primary transition-colors">Dashboard</a>
+<span class="material-symbols-outlined text-[16px] mx-1">chevron_right</span>
+<a href="{% url 'catalog_overview' %}" class="hover:text-primary transition-colors">Catalog</a>
+<span class="material-symbols-outlined text-[16px] mx-1">chevron_right</span>
+<a href="{% url 'catalog_overview' %}" class="text-primary font-semibold">Canciones</a>
+<span class="material-symbols-outlined text-[16px] mx-1">chevron_right</span>
+<span class="text-primary font-semibold">Detalle: {{ cancion.titulocancion }}</span>
+{% endblock %}
+
+{% block content %}
+<style>
+    #fixed-bg {
+        position: fixed;
+        inset: 0;
+        z-index: -1;
+        background-color: #0B0C10;
+        background-size: cover;
+        background-position: center;
+        filter: blur(12px) brightness(0.9);
+        transform: scale(1.05);
+    }
+
+    #fixed-bg::after {
+        content: '';
+        position: absolute;
+        inset: 0;
+        background: linear-gradient(
+            to bottom,
+            rgba(11, 12, 16, 0.75) 0%,
+            rgba(11, 12, 16, 0.90) 100%
+        );
+    }
+
+    .glass-ultra {
+        background: rgba(0, 0, 0, 0.25);
+        backdrop-filter: blur(40px);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .read-field {
+        background: rgba(0,0,0,0.3);
+        border: 1px solid rgba(255,255,255,0.05);
+        color: white;
+        padding: 1rem;
+        border-radius: 0.75rem;
+    }
+
+    .label-meta {
+        font-size: 0.7rem;
+        font-weight: 800;
+        color: rgba(255,255,255,0.4);
+        text-transform: uppercase;
+        margin-bottom: 0.5rem;
+        display: block;
+    }
+</style>
+
+<div id="fixed-bg"
+     {% if cancion.urlportada %}
+     style="background-image: url('{{ cancion.urlportada }}');"
+     {% endif %}>
+</div>
+
+<div class="w-full min-h-[calc(100vh-64px)] p-8">
+
+    <!-- CONTENEDOR PRINCIPAL -->
+    <div class="max-w-6xl mx-auto">
+
+        <!-- TITULO -->
+        <div class="mb-8">
+            <h1 class="text-4xl font-extrabold text-white">
+                {{ cancion.titulocancion }}
+            </h1>
+        </div>
+
+        <!-- GRID -->
+        <div class="grid grid-cols-1 xl:grid-cols-[380px_1fr] gap-8 items-start">
+
+            <!-- IZQUIERDA -->
+            <div class="space-y-6">
+
+                <!-- PORTADA -->
+                <div class="aspect-square w-full max-w-[420px] mx-auto rounded-3xl border border-white/10 glass-ultra shadow-2xl overflow-hidden">
+                    <img src="{{ cancion.urlportada|default:'' }}"
+                         class="w-full h-full object-cover">
+                </div>
+
+                <!-- CARACTERISTICAS -->
+                <div class="glass-ultra p-8 rounded-3xl">
+                    <h3 class="text-sm font-semibold text-white/50 uppercase tracking-wider mb-5 flex items-center gap-2">
+                        <span class="material-symbols-outlined text-base">stars</span>
+                        CARACTERÍSTICAS
+                    </h3>
+
+                    <div class="grid grid-cols-2 gap-6">
+
+                        <div>
+                            <label class="label-meta">Duración</label>
+                            <div class="read-field">
+                                {{ cancion.duracionseg }} s
+                            </div>
+                        </div>
+
+                        <div>
+                            <label class="label-meta">Explícita</label>
+                            <div class="read-field">
+                                {% if cancion.esexplicita %}
+                                    Sí
+                                {% else %}
+                                    No
+                                {% endif %}
+                            </div>
+                        </div>
+
+                        <div>
+                            <label class="label-meta">Estado</label>
+                            <div class="read-field">
+                                {{ cancion.estadopublicacion }}
+                            </div>
+                        </div>
+
+                        <div>
+                            <label class="label-meta">Género</label>
+                            <div class="read-field">
+                                {{ cancion.genero.nombregenero|default:"—" }}
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+            </div>
+
+            <!-- DERECHA -->
+            <div class="space-y-6">
+
+                <!-- INFORMACION -->
+                <div class="glass-ultra p-8 rounded-3xl space-y-8">
+
+                    <!-- GENERAL -->
+                    <div>
+                        <h3 class="text-sm font-semibold text-white/50 uppercase tracking-wider mb-5 flex items-center gap-2">
+                            <span class="material-symbols-outlined text-base">info</span>
+                            INFORMACIÓN GENERAL
+                        </h3>
+
+                        <div class="grid grid-cols-2 gap-6">
+
+                            <div>
+                                <label class="label-meta">ID de Canción</label>
+                                <div class="read-field font-mono">
+                                    {{ cancion.idcancion }}
+                                </div>
+                            </div>
+
+                            <div>
+                                <label class="label-meta">Título</label>
+                                <div class="read-field">
+                                    {{ cancion.titulocancion }}
+                                </div>
+                            </div>
+
+                            <div>
+                                <label class="label-meta">Artista</label>
+                                <div class="read-field">
+                                    {{ cancion.album.artista.nombreartistico|default:"N/A" }}
+                                </div>
+                            </div>
+
+                            <div>
+                                <label class="label-meta">Álbum</label>
+                                <div class="read-field">
+                                    {{ cancion.album.tituloalbum|default:"N/A" }}
+                                </div>
+                            </div>
+
+                        </div>
+                    </div>
+
+                    <!-- LINKS -->
+                    <div>
+                        <h3 class="text-sm font-semibold text-white/50 uppercase tracking-wider mb-5 flex items-center gap-2">
+                            <span class="material-symbols-outlined text-base">link</span>
+                            ENLACES
+                        </h3>
+
+                        <div class="space-y-5">
+
+                            <div>
+                                <label class="label-meta">Spotify URL</label>
+                                <div class="read-field font-mono text-xs break-all">
+                                    {{ cancion.spotifyurlapi|default:"No disponible" }}
+                                </div>
+                            </div>
+
+                            <div>
+                                <label class="label-meta">URL Portada</label>
+                                <div class="read-field font-mono text-xs break-all">
+                                    {{ cancion.urlportada|default:"No disponible" }}
+                                </div>
+                            </div>
+
+                        </div>
+                    </div>
+
+                </div>
+
+                <!-- BOTONES -->
+                <div class="flex justify-end gap-4 pt-4">
+
+                    <a href="{% url 'catalog_overview' %}"
+                       class="px-8 py-4 text-white/60 hover:text-white transition-all">
+                        Volver
+                    </a>
+
+                    <a href="{% url 'edit_track' cancion.idcancion %}"
+                       class="flex items-center gap-2 px-8 py-4 bg-secondary text-black font-bold rounded-xl hover:scale-105 transition-transform">
+                        <span class="material-symbols-outlined">edit</span>
+                        Editar
+                    </a>
+
+                    <button
+                        onclick="deleteTrack('{{ cancion.idcancion }}')"
+                        class="flex items-center gap-2 px-8 py-4 bg-red-500/20 text-red-400 font-bold rounded-xl hover:bg-red-500/30 transition-all">
+
+                        <span class="material-symbols-outlined">delete</span>
+                        Eliminar
+                    </button>
+
+                </div>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+<script>
+async function deleteTrack(id) {
+    if (!confirm('¿Estás seguro de eliminar este track?')) return;
+
+    const res = await fetch(`/catalogo/canciones/${id}/delete/`, {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': '{{ csrf_token }}'
+        }
+    });
+
+    if (res.ok) {
+        window.location.href = "{% url 'catalog_overview' %}";
+    } else {
+        alert('Error al eliminar');
+    }
+}
+</script>
+{% endblock %}
