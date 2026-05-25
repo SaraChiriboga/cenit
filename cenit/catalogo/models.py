@@ -81,8 +81,6 @@ class Cancion(models.Model):
     # Transformados a ForeignKey relacionales
     album = models.ForeignKey(Album, on_delete=models.DO_NOTHING, db_column='Album_idAlbum')
     genero = models.ForeignKey(Genero, on_delete=models.DO_NOTHING, db_column='Genero_idGenero')
-
-    idcancion_nuevo = models.IntegerField(db_column='idCancion_Nuevo', blank=True, null=True)
     spotifyurlapi = models.CharField(db_column='spotifyUrlAPI', max_length=500,
                                      db_collation='SQL_Latin1_General_CP1_CI_AS', blank=True, null=True)
 

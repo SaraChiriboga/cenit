@@ -4,10 +4,10 @@ from . import views
 urlpatterns = [
     # ── Canciones ──
     path('', views.catalog_overview, name='songs_overview'),
-    path('canciones/add/', views.add_track_view, name='add_track'),
     path('canciones/sync/<int:cancion_id>/', views.sync_spotify_track, name='sync_spotify_track'),
     path('api/search-spotify/', views.search_spotify_ajax, name='search_spotify_ajax'),
     path('api/check-existence/', views.check_existence, name='check_existence'),
+    path('canciones/add/', views.add_track_ajax, name='add_track'),
 
     # ── Artistas ──
     path('artistas/', views.artista_list, name='artists_overview'),

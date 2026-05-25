@@ -4,6 +4,7 @@ from django.http import JsonResponse
 from django.shortcuts import render, get_object_or_404, redirect
 from django.contrib.auth.decorators import login_required
 from django.db.models import Q
+from django.views.decorators.csrf import csrf_exempt
 
 from .models import Cancion, Artista, Album, Genero, Colaboracion
 from .spotify_service import SpotifyClient
@@ -27,15 +28,50 @@ def catalog_overview(request):
     return render(request, 'catalogo/songs_overview.html', {'canciones': canciones_db})
 
 
-@login_required
-def add_track_view(request):
-    albumes = Album.objects.all()
-    generos = Genero.objects.all()
-    return render(request, 'catalogo/add_track.html', {
-        'albumes': albumes,
-        'generos': generos,
-    })
+from django.db import connection  # Asegúrate de importar esto
 
+
+@login_required
+@csrf_exempt
+def add_track_ajax(request):
+    if request.method == 'GET':
+        return render(request, 'catalogo/add_track.html', {
+            'albumes': Album.objects.all(),
+            'generos': Genero.objects.all(),
+        })
+
+    if request.method == 'POST':
+        try:
+            # Captura todos los datos
+            titulo = request.POST.get('titulocancion')
+            album_id = request.POST.get('album')
+            genero_id = request.POST.get('genero')
+            duracion = request.POST.get('duracionseg')
+            url_portada = request.POST.get('urlportada')
+            es_explicita = request.POST.get('esexplicita') == 'on'
+            spotify_url = request.POST.get('spotify_url')
+
+            if not titulo or not album_id:
+                return JsonResponse({'status': 'error', 'message': 'Faltan campos obligatorios.'}, status=400)
+
+            if Cancion.objects.filter(titulocancion__iexact=titulo, album_id=album_id).exists():
+                return JsonResponse({'status': 'error', 'message': 'La canción ya existe en este álbum.'}, status=400)
+
+            # Inserción asegurando que spotifyUrlAPI se guarde
+            with connection.cursor() as cursor:
+                cursor.execute("""
+                    INSERT INTO [Catalogo].[Cancion] 
+                    (tituloCancion, duracionSeg, esExplicita, estadoPublicacion, urlPortada, Album_idAlbum, Genero_idGenero, spotifyUrlAPI)
+                    VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
+                """, [titulo, duracion or 0, 1 if es_explicita else 0, 'Borrador', url_portada, album_id, genero_id,
+                      spotify_url])
+
+            return JsonResponse({'status': 'success', 'message': 'Canción guardada correctamente.'})
+
+        except Exception as e:
+            return JsonResponse({'status': 'error', 'message': str(e)}, status=400)
+
+    return JsonResponse({'status': 'error', 'message': 'Método no permitido'}, status=405)
 
 def sync_spotify_track(request, cancion_id):
     cancion = get_object_or_404(Cancion, idcancion=cancion_id)
@@ -66,14 +102,15 @@ def search_spotify_ajax(request):
 
 def check_existence(request):
     tipo = request.GET.get('tipo')
-    nombre = request.GET.get('nombre', '').strip()  # Limpia espacios al inicio/final
+    nombre = request.GET.get('nombre', '').strip()
 
     existe = False
     if tipo == 'album':
-        # Buscamos ignorando mayúsculas y espacios extra
         existe = Album.objects.filter(tituloalbum__iexact=nombre).exists()
     elif tipo == 'genero':
         existe = Genero.objects.filter(nombregenero__iexact=nombre).exists()
+    elif tipo == 'cancion':  # <--- AÑADE ESTO
+        existe = Cancion.objects.filter(titulocancion__iexact=nombre).exists()
 
     return JsonResponse({'existe': existe})
 
