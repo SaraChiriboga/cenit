@@ -22,10 +22,12 @@ urlpatterns = [
     path('ajax/search-artist/', views.search_artist_spotify_ajax, name='search_artist_spotify_ajax'),
 
     # ── Álbumes ──
-    path('albumes/', views.album_list, name='albums_overview'),
-    path('albumes/add/', views.album_add, name='album_add'),
-    path('albumes/<int:pk>/edit/', views.album_edit, name='album_edit'),
-    path('albumes/<int:pk>/delete/', views.album_delete, name='album_delete'),
+    path('albumes/', views.albums_overview, name='albums_overview'),
+    path('albumes/add/', views.add_album, name='add_album'),
+    path('albumes/<int:pk>/', views.read_album, name='read_album'),
+    path('albumes/<int:pk>/edit/', views.edit_album, name='edit_album'),
+    path('albumes/<int:pk>/delete/', views.delete_album, name='delete_album'),
+    path('ajax/search-album/', views.search_album_spotify_ajax, name='search_album_spotify_ajax'),
 
     # ── Géneros ──
     path('generos/', views.genero_list, name='genre_overview'),

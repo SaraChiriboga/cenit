@@ -495,7 +495,7 @@ select option {
         const data = await res.json();
 
         if (!data.existe) {
-            let createUrl = tipo === 'album' ? "{% url 'album_add' %}" : "{% url 'genero_add' %}";
+            let createUrl = tipo === 'album' ? "{% url 'add_album' %}" : "{% url 'genero_add' %}";
             msgContainer.innerHTML = `<div class="text-red-400 text-xs mt-1">⚠️ "${nombre}" no existe. <a href="${createUrl}?nombre=${encodeURIComponent(nombre)}" class="error-link" target="_blank">Crear ${tipo}</a></div>`;
         }
 

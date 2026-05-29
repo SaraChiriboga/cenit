@@ -109,11 +109,17 @@ def check_existence(request):
 
     existe = False
     if tipo == 'album':
+        from .models import Album
         existe = Album.objects.filter(tituloalbum__iexact=nombre).exists()
     elif tipo == 'genero':
+        from .models import Genero
         existe = Genero.objects.filter(nombregenero__iexact=nombre).exists()
-    elif tipo == 'cancion':  # <--- AÑADE ESTO
+    elif tipo == 'cancion':
+        from .models import Cancion
         existe = Cancion.objects.filter(titulocancion__iexact=nombre).exists()
+    elif tipo == 'artista':  # <--- AÑADE ESTO
+        from .models import Artista
+        existe = Artista.objects.filter(nombreartistico__iexact=nombre).exists()
 
     return JsonResponse({'existe': existe})
 
@@ -377,39 +383,151 @@ def search_artist_spotify_ajax(request):
 # ══════════════════════════════════════════
 #  ÁLBUMES
 # ══════════════════════════════════════════
-
 @login_required
-def album_list(request):
-    albumes = Album.objects.select_related('artista').all()
+def albums_overview(request):
     query = request.GET.get('q', '')
     if query:
-        albumes = albumes.filter(
-            Q(tituloalbum__icontains=query) | Q(artista__nombreartistico__icontains=query)
-        )
+        albumes = Album.objects.filter(tituloalbum__icontains=query)
+    else:
+        albumes = Album.objects.all()
+
     return render(request, 'catalogo/albumes/albums_overview.html', {'albumes': albumes, 'query': query})
 
-
 @login_required
-def album_add(request):
-    artistas = Artista.objects.all()
-    return render(request, 'catalogo/albumes/album_form.html', {'action': 'Agregar', 'album': None, 'artistas': artistas})
+def add_album(request):
+    if request.method == 'GET':
+        artistas = Artista.objects.all()
+        return render(request, 'catalogo/albumes/add_album.html', {'artistas': artistas})
 
-
-@login_required
-def album_edit(request, pk):
-    album = get_object_or_404(Album, idalbum=pk)
-    artistas = Artista.objects.all()
-    return render(request, 'catalogo/albumes/album_form.html', {'action': 'Editar', 'album': album, 'artistas': artistas})
-
-
-@login_required
-def album_delete(request, pk):
-    album = get_object_or_404(Album, idalbum=pk)
     if request.method == 'POST':
-        messages.success(request, f"Álbum '{album.tituloalbum}' eliminado.")
-        return redirect('album_list')
-    return render(request, 'catalogo/albumes/confirm_delete.html', {'objeto': album, 'tipo': 'álbum'})
+        try:
+            titulo = request.POST.get('tituloalbum')
+            fecha_lanzamiento = request.POST.get('fechalanzamiento')
+            url_portada = request.POST.get('urlportada', '')
+            artista_id = request.POST.get('artista')
 
+            if not titulo or not artista_id or not fecha_lanzamiento:
+                return JsonResponse({'status': 'error', 'message': 'Faltan campos obligatorios.'}, status=400)
+
+            with connection.cursor() as cursor:
+                cursor.execute("""
+                    INSERT INTO [Catalogo].[Album] 
+                    (tituloAlbum, fechaLanzamiento, urlPortada, Artista_idArtista)
+                    VALUES (%s, %s, %s, %s)
+                """, [titulo, fecha_lanzamiento, url_portada, artista_id])
+
+            return JsonResponse({'status': 'success', 'message': 'Álbum guardado correctamente.'})
+
+        except Exception as e:
+            return JsonResponse({'status': 'error', 'message': str(e)}, status=400)
+
+    return JsonResponse({'status': 'error', 'message': 'Método no permitido'}, status=405)
+
+@login_required
+def read_album(request, pk):
+    album = get_object_or_404(Album, idalbum=pk)
+    artistas = Artista.objects.all()
+    return render(request, 'catalogo/albumes/read_album.html', {'album': album, 'artistas': artistas})
+
+@login_required
+def edit_album(request, pk):
+    album = get_object_or_404(Album, idalbum=pk)
+
+    if request.method == 'POST':
+        try:
+            url_portada = request.POST.get('urlportada')
+            with connection.cursor() as cursor:
+                cursor.execute("""
+                    UPDATE [Catalogo].[Album]
+                    SET tituloAlbum=%s, 
+                        fechaLanzamiento=%s, 
+                        urlPortada=%s,
+                        Artista_idArtista=%s
+                    WHERE idAlbum=%s
+                """, [
+                    request.POST.get('tituloalbum'),
+                    request.POST.get('fechalanzamiento'),
+                    url_portada,
+                    request.POST.get('artista'),
+                    pk
+                ])
+            return JsonResponse({'status': 'success', 'urlportada': url_portada})
+        except Exception as e:
+            return JsonResponse({'status': 'error', 'message': str(e)}, status=400)
+
+    artistas = Artista.objects.all()
+    context = {'album': album, 'artistas': artistas}
+    return render(request, 'catalogo/albumes/edit_album.html', context)
+
+@login_required
+def delete_album(request, pk):
+    if request.method == 'POST':
+        try:
+            with transaction.atomic():
+                with connection.cursor() as cursor:
+                    # Preparar subconsulta de canciones de este álbum
+                    query_canciones = "SELECT idCancion FROM [Catalogo].[Cancion] WHERE Album_idAlbum = %s"
+
+                    # 1. Limpiar dependencias de las canciones en otros esquemas
+                    cursor.execute(
+                        f"DELETE FROM [Catalogo].[Colaboracion] WHERE Cancion_idCancion IN ({query_canciones})", [pk])
+                    cursor.execute(
+                        f"DELETE FROM [Usuario].[CancionFavorita] WHERE Cancion_idCancion IN ({query_canciones})", [pk])
+                    cursor.execute(
+                        f"DELETE FROM [Usuario].[PlaylistCancion] WHERE Cancion_idCancion IN ({query_canciones})", [pk])
+                    cursor.execute(
+                        f"DELETE FROM [Auditoria].[EstadisticaDiaria] WHERE Cancion_idCancion IN ({query_canciones})",
+                        [pk])
+
+                    # 2. Eliminar las canciones del álbum
+                    cursor.execute("DELETE FROM [Catalogo].[Cancion] WHERE Album_idAlbum = %s", [pk])
+
+                    # 3. Eliminar el álbum
+                    cursor.execute("DELETE FROM [Catalogo].[Album] WHERE idAlbum = %s", [pk])
+
+            return JsonResponse({'status': 'success'})
+        except Exception as e:
+            return JsonResponse({'status': 'error', 'message': f"Error al eliminar en cascada: {str(e)}"}, status=400)
+
+    return JsonResponse({'status': 'error', 'message': 'Método no permitido'}, status=405)
+
+@login_required
+def search_album_spotify_ajax(request):
+    """Busca álbumes en Spotify para autocompletado"""
+    query = request.GET.get('q', '').strip()
+    if not query:
+        return JsonResponse({'error': 'No query provided'}, status=400)
+
+    try:
+        # Reutilizamos tu cliente de Spotify
+        spotify = SpotifyClient()
+        token = spotify.get_token() if hasattr(spotify, 'get_token') else spotify.token
+
+        headers = {'Authorization': f'Bearer {token}'}
+        url = f"https://api.spotify.com/v1/search?q={urllib.parse.quote(query)}&type=album&limit=5"
+
+        res = requests.get(url, headers=headers)
+        data = res.json()
+        items = data.get('albums', {}).get('items', [])
+
+        results = []
+        for item in items:
+            images = item.get('images', [])
+            image_url = images[0]['url'] if images else ''
+            # Obtenemos el nombre del artista principal del álbum
+            artist_name = item.get('artists', [{}])[0].get('name', 'Desconocido')
+
+            results.append({
+                'name': item.get('name'),
+                'image': image_url,
+                'artist': artist_name,
+                'release_date': item.get('release_date', ''),
+                'spotify_url': item.get('external_urls', {}).get('spotify', '')
+            })
+
+        return JsonResponse(results, safe=False)
+    except Exception as e:
+        return JsonResponse({'error': 'Error conectando con Spotify'}, status=500)
 
 # ══════════════════════════════════════════
 #  GÉNEROS
