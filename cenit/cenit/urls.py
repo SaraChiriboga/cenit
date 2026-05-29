@@ -16,4 +16,6 @@ urlpatterns = [
 
     # El cuarto de máquinas oculto solo para ti si lo necesitas en desarrollo
     path('admin/', admin.site.urls),
+
+    path('suscripciones/', include('suscripciones.urls')),
 ]
