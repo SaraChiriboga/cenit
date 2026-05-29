@@ -205,7 +205,7 @@
                         Guardar Cambios
                     </button>
 
-                    <button onclick="showDeleteModal()"
+                    <button onclick="window.showDeleteModal()"
                             class="inline-flex items-center gap-2 px-8 py-4 bg-red-500/20 text-red-400 font-bold rounded-xl hover:bg-red-500/30 transition-all text-sm">
                         <span class="material-symbols-outlined text-[20px]">delete</span>
                         Eliminar
@@ -308,8 +308,7 @@
         setTimeout(() => toast.classList.remove('show'), 3000);
     }
 
-    // --- FUNCIONES DEL MODAL DE ELIMINACIÓN ---
-    function showDeleteModal() {
+    window.showDeleteModal = function() {
         const modal = document.getElementById('delete-modal');
         const content = document.getElementById('delete-modal-content');
         modal.classList.remove('hidden');
@@ -321,7 +320,7 @@
         }, 10);
     }
 
-    function closeModal() {
+    window.closeModal = function() {
         const modal = document.getElementById('delete-modal');
         const content = document.getElementById('delete-modal-content');
 
@@ -334,7 +333,7 @@
         }, 150);
     }
 
-    async function confirmDelete() {
+    window.confirmDelete = async function() {
         const btn = document.getElementById('btn-confirm-delete');
         btn.disabled = true;
         btn.innerHTML = '<span class="material-symbols-outlined animate-spin text-[20px]">progress_activity</span> Borrando...';
@@ -342,7 +341,7 @@
         try {
             const res = await fetch(`/catalogo/albumes/${ALBUM_ID}/delete/`, {
                 method: 'POST',
-                headers: { 'X-CSRFToken': CSRF }
+                headers: { 'X-CSRFToken': CSRF_TOKEN }
             });
             const data = await res.json();
 
@@ -350,11 +349,11 @@
                 window.location.href = "{% url 'albums_overview' %}";
             } else {
                 showToast(data.message || 'Error al eliminar el álbum.', false);
-                closeModal();
+                window.closeModal();
             }
         } catch (error) {
             showToast('Error de conexión al intentar eliminar.', false);
-            closeModal();
+            window.closeModal();
         } finally {
             btn.disabled = false;
             btn.innerHTML = 'Eliminar';

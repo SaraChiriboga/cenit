@@ -72,7 +72,7 @@
                                     <span class="material-symbols-outlined text-[20px]">edit</span>
                                 </a>
                                 <a href="javascript:void(0);"
-                                   onclick="showDeleteModal('{{ album.idalbum }}', '{{ album.tituloalbum|escapejs }}')"
+                                   onclick="window.showDeleteModal('{{ album.idalbum }}', '{{ album.tituloalbum|escapejs }}')"
                                    class="p-2 text-on-surface-variant hover:text-error transition-colors"
                                    title="Eliminar">
                                     <span class="material-symbols-outlined text-[20px]">delete</span>
@@ -196,12 +196,12 @@
                 showToast('Álbum y canciones eliminadas.', 'success');
                 setTimeout(() => window.location.reload(), 800);
             } else {
-                showToast(data.message || 'Error al eliminar el álbum.', 'error');
-                closeModal();
+                showToast(data.message || 'Error al intentar eliminar.', 'error');
+                window.closeModal();
             }
         } catch (error) {
             showToast('Error de red al intentar eliminar.', 'error');
-            closeModal();
+            window.closeModal();
         } finally {
             btn.disabled = false;
             btn.innerHTML = 'Eliminar';
