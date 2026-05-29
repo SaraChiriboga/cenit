@@ -29,13 +29,7 @@
     <form method="post" class="glass-panel rounded-2xl p-8 flex flex-col gap-5">
         {% csrf_token %}
 
-        {% if not plan %}
-        <div class="flex flex-col gap-1.5">
-            <label class="text-xs font-medium text-on-surface-variant uppercase tracking-wider">ID del plan</label>
-            <input type="number" name="idtipo" required
-                   class="bg-surface-container-low border border-outline-variant/30 rounded-xl px-4 py-2.5 text-on-surface text-sm focus:ring-2 focus:ring-secondary/50 focus:border-secondary outline-none transition-all"/>
-        </div>
-        {% endif %}
+        <!-- ELIMINADO: bloque del campo ID del plan (ya no se pide) -->
 
         <div class="flex flex-col gap-1.5">
             <label class="text-xs font-medium text-on-surface-variant uppercase tracking-wider">Nombre del plan</label>

@@ -36,24 +36,17 @@ def plan_add(request):
                'CNY', 'INR', 'JPY', 'KRW', 'MXN', 'RUB', 'ZAR']
     if request.method == 'POST':
         try:
-            idtipo     = request.POST.get('idtipo')
             nombreplan = request.POST.get('nombreplan')
-            precio     = request.POST.get('precio')
-            moneda     = request.POST.get('moneda')
-            duracion   = request.POST.get('duracion')
+            precio = request.POST.get('precio')
+            moneda = request.POST.get('moneda')
+            duracion = request.POST.get('duracion')
 
-            if not all([idtipo, nombreplan, precio, moneda, duracion]):
+            if not all([nombreplan, precio, moneda, duracion]):
                 messages.error(request, 'Todos los campos son obligatorios.')
-                return render(request, 'Suscripciones/plan/plan_form.html',
-                              {'action': 'Nuevo', 'monedas': MONEDAS})
+                return render(request, 'Suscripciones/plan/plan_form.html', {'action': 'Nuevo', 'monedas': MONEDAS})
 
-            if TipoSuscripcion.objects.filter(idtipo=idtipo).exists():
-                messages.error(request, f'Ya existe un plan con el ID {idtipo}.')
-                return render(request, 'Suscripciones/plan/plan_form.html',
-                              {'action': 'Nuevo', 'monedas': MONEDAS})
-
+            # Crear sin idtipo (se genera solo)
             TipoSuscripcion.objects.create(
-                idtipo=idtipo,
                 nombreplan=nombreplan,
                 precio=precio,
                 moneda=moneda,
@@ -61,14 +54,9 @@ def plan_add(request):
             )
             messages.success(request, f"Plan '{nombreplan}' creado correctamente.")
             return redirect('plan_list')
-
         except Exception as e:
             messages.error(request, f'Error al crear el plan: {e}')
-
-    return render(request, 'Suscripciones/plan/plan_form.html', {
-        'action': 'Nuevo',
-        'monedas': MONEDAS,
-    })
+    return render(request, 'Suscripciones/plan/plan_form.html', {'action': 'Nuevo', 'monedas': MONEDAS})
 
 
 @login_required
@@ -134,21 +122,18 @@ def promocion_add(request):
     planes = TipoSuscripcion.objects.all()
     if request.method == 'POST':
         try:
-            idpromo        = request.POST.get('idpromo')
-            descripcion    = request.POST.get('descripcion')
+            descripcion = request.POST.get('descripcion')
             porcentajedesc = request.POST.get('porcentajedesc')
-            fechainicio    = request.POST.get('fechainicio')
-            fechaexpira    = request.POST.get('fechaexpira') or None
-            estadoactivo   = request.POST.get('estadoactivo') == 'on'
-            idtipo         = request.POST.get('tiposuscripcion')
+            fechainicio = request.POST.get('fechainicio')
+            fechaexpira = request.POST.get('fechaexpira') or None
+            estadoactivo = request.POST.get('estadoactivo') == 'on'
+            idtipo = request.POST.get('tiposuscripcion')
 
-            if not all([idpromo, descripcion, porcentajedesc, fechainicio, idtipo]):
+            if not all([descripcion, porcentajedesc, fechainicio, idtipo]):
                 messages.error(request, 'Faltan campos obligatorios.')
-                return render(request, 'Suscripciones/promocion/promocion_form.html',
-                              {'action': 'Nueva', 'planes': planes})
+                return render(request, 'Suscripciones/promocion/promocion_form.html', {'action': 'Nueva', 'planes': planes})
 
             Promocion.objects.create(
-                idpromo=idpromo,
                 descripcion=descripcion,
                 porcentajedesc=porcentajedesc,
                 fechainicio=fechainicio,
@@ -158,14 +143,9 @@ def promocion_add(request):
             )
             messages.success(request, f"Promoción '{descripcion}' creada.")
             return redirect('promocion_list')
-
         except Exception as e:
             messages.error(request, f'Error: {e}')
-
-    return render(request, 'Suscripciones/promocion/promocion_form.html', {
-        'action': 'Nueva',
-        'planes': planes,
-    })
+    return render(request, 'Suscripciones/promocion/promocion_form.html', {'action': 'Nueva', 'planes': planes})
 
 
 @login_required
@@ -232,22 +212,22 @@ def suscripcion_list(request):
 
 @login_required
 def suscripcion_add(request):
-    from usuarios.models import Usuario  # import local para evitar circular
-    planes     = TipoSuscripcion.objects.all()
+    from usuarios.models import Usuario
+    planes = TipoSuscripcion.objects.all()
     promociones = Promocion.objects.filter(estadoactivo=True)
-    usuarios   = Usuario.objects.all()
+    usuarios = Usuario.objects.all()
 
     if request.method == 'POST':
         try:
-            idsuscripcion = request.POST.get('idsuscripcion')
-            fechainicio   = request.POST.get('fechainicio')
-            fechafin      = request.POST.get('fechafin')
-            estado        = request.POST.get('estado')
-            idusuario     = request.POST.get('usuario') or None
-            idtipo        = request.POST.get('tiposuscripcion')
-            idpromo       = request.POST.get('promocion') or None
+            fechainicio = request.POST.get('fechainicio')
+            fechafin = request.POST.get('fechafin')
+            estado = request.POST.get('estado')
+            idusuario = request.POST.get('usuario') or None
+            idtipo = request.POST.get('tiposuscripcion')
+            idpromo = request.POST.get('promocion') or None
 
-            if not all([idsuscripcion, fechainicio, fechafin, estado, idtipo]):
+            # Quitamos idsuscripcion de la validación
+            if not all([fechainicio, fechafin, estado, idtipo]):
                 messages.error(request, 'Faltan campos obligatorios.')
                 return render(request, 'Suscripciones/suscripcion/suscripcion_form.html', {
                     'action': 'Nueva', 'planes': planes,
@@ -255,7 +235,7 @@ def suscripcion_add(request):
                 })
 
             Suscripcion.objects.create(
-                idsuscripcion=idsuscripcion,
+                # idsuscripcion ya no se envía (se genera automáticamente la PK 'id')
                 fechainicio=fechainicio,
                 fechafin=fechafin,
                 estado=estado,
@@ -265,7 +245,6 @@ def suscripcion_add(request):
             )
             messages.success(request, 'Suscripción registrada correctamente.')
             return redirect('suscripcion_list')
-
         except Exception as e:
             messages.error(request, f'Error: {e}')
 
@@ -347,19 +326,19 @@ def notificacion_list(request):
 @login_required
 def notificacion_add(request):
     from usuarios.models import Usuario
-    usuarios    = Usuario.objects.all()
+    usuarios = Usuario.objects.all()
     promociones = Promocion.objects.all()
-    TIPOS       = ['Aviso de Seguridad', 'Nuevo Lanzamiento', 'Pago Exitoso']
+    TIPOS = ['Aviso de Seguridad', 'Nuevo Lanzamiento', 'Pago Exitoso']
 
     if request.method == 'POST':
         try:
-            idnotificacion = request.POST.get('idnotificacion')
-            tiponotif      = request.POST.get('tiponotif')
-            mensaje        = request.POST.get('mensaje')
-            idusuario      = request.POST.get('usuario')
-            idpromo        = request.POST.get('promocion')
+            # ya no se captura idnotificacion
+            tiponotif = request.POST.get('tiponotif')
+            mensaje = request.POST.get('mensaje')
+            idusuario = request.POST.get('usuario')
+            idpromo = request.POST.get('promocion')
 
-            if not all([idnotificacion, tiponotif, mensaje, idusuario, idpromo]):
+            if not all([tiponotif, mensaje, idusuario, idpromo]):
                 messages.error(request, 'Todos los campos son obligatorios.')
                 return render(request, 'Suscripciones/notificacion/notificacion_form.html', {
                     'action': 'Nueva', 'usuarios': usuarios,
@@ -367,7 +346,7 @@ def notificacion_add(request):
                 })
 
             Notificacion.objects.create(
-                idnotificacion=idnotificacion,
+                # idnotificacion ya no se envía
                 tiponotif=tiponotif,
                 mensaje=mensaje,
                 usuario_id=idusuario,
@@ -375,7 +354,6 @@ def notificacion_add(request):
             )
             messages.success(request, 'Notificación creada correctamente.')
             return redirect('notificacion_list')
-
         except Exception as e:
             messages.error(request, f'Error: {e}')
 
@@ -427,21 +405,21 @@ def playlist_add(request):
 
     if request.method == 'POST':
         try:
-            idplaylist    = request.POST.get('idplaylist')
-            nombre        = request.POST.get('nombre')
-            descripcion   = request.POST.get('descripcion') or None
-            esprivada     = request.POST.get('esprivada') == 'on'
-            espublicada   = request.POST.get('espublicada') == 'on'
+            # ya no se captura idplaylist
+            nombre = request.POST.get('nombre')
+            descripcion = request.POST.get('descripcion') or None
+            esprivada = request.POST.get('esprivada') == 'on'
+            espublicada = request.POST.get('espublicada') == 'on'
             imagenportada = request.POST.get('imagenportada') or None
-            idusuario     = request.POST.get('usuario') or None
+            idusuario = request.POST.get('usuario') or None
 
-            if not all([idplaylist, nombre]):
-                messages.error(request, 'El ID y el nombre son obligatorios.')
+            # validar solo los campos que siguen siendo obligatorios
+            if not nombre:
+                messages.error(request, 'El nombre es obligatorio.')
                 return render(request, 'Suscripciones/playlist/playlist_form.html',
                               {'action': 'Nueva', 'usuarios': usuarios})
 
             Playlist.objects.create(
-                idplaylist=idplaylist,
                 nombre=nombre,
                 descripcion=descripcion,
                 esprivada=esprivada,
@@ -451,7 +429,6 @@ def playlist_add(request):
             )
             messages.success(request, f"Playlist '{nombre}' creada.")
             return redirect('playlist_list')
-
         except Exception as e:
             messages.error(request, f'Error: {e}')
 
@@ -598,18 +575,16 @@ def estadistica_add(request):
 
     if request.method == 'POST':
         try:
-            idestat      = request.POST.get('idestat')
             totalrepros  = request.POST.get('totalrepros')
             fechareporte = request.POST.get('fechareporte')
             cancion_id   = request.POST.get('cancion')
 
-            if not all([idestat, totalrepros, fechareporte, cancion_id]):
+            if not all([totalrepros, fechareporte, cancion_id]):
                 messages.error(request, 'Todos los campos son obligatorios.')
                 return render(request, 'Suscripciones/estadistica/estadistica_form.html',
                               {'action': 'Nueva', 'canciones': canciones})
 
             EstadisticaDiaria.objects.create(
-                idestat=idestat,
                 totalrepros=totalrepros,
                 fechareporte=fechareporte,
                 cancion_id=cancion_id,
