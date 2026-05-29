@@ -25,7 +25,7 @@ def catalog_overview(request):
             Q(album__tituloalbum__icontains=query) |
             Q(idcancion__icontains=query_id)
         )
-    return render(request, 'catalogo/songs_overview.html', {'canciones': canciones_db})
+    return render(request, 'catalogo/canciones/songs_overview.html', {'canciones': canciones_db})
 
 
 from django.db import connection  # Asegúrate de importar esto
@@ -35,7 +35,7 @@ from django.db import connection  # Asegúrate de importar esto
 @csrf_exempt
 def add_track_ajax(request):
     if request.method == 'GET':
-        return render(request, 'catalogo/add_track.html', {
+        return render(request, 'catalogo/canciones/add_track.html', {
             'albumes': Album.objects.all(),
             'generos': Genero.objects.all(),
         })
@@ -127,7 +127,7 @@ def read_track(request, pk):
         Cancion.objects.select_related('album__artista', 'genero'),
         idcancion=pk
     )
-    return render(request, 'catalogo/read_track.html', {
+    return render(request, 'catalogo/canciones/read_track.html', {
         'cancion': cancion,
         'albumes': Album.objects.all(),
         'generos': Genero.objects.all(),
@@ -180,7 +180,7 @@ def edit_track(request, pk):
         'estados': estados_publicacion
     }
 
-    return render(request, 'catalogo/edit_track.html', context)
+    return render(request, 'catalogo/canciones/edit_track.html', context)
 
 # ══════════════════════════════════════════
 #  ARTISTAS
@@ -194,19 +194,19 @@ def artista_list(request):
         artistas = artistas.filter(
             Q(nombreartistico__icontains=query) | Q(paisorigen__icontains=query)
         )
-    return render(request, 'catalogo/artists_overview.html', {'artistas': artistas, 'query': query})
+    return render(request, 'catalogo/artistas/artists_overview.html', {'artistas': artistas, 'query': query})
 
 
 @login_required
 def artista_add(request):
     # TODO: implementar lógica de guardado
-    return render(request, 'catalogo/artista_form.html', {'action': 'Agregar', 'artista': None})
+    return render(request, 'catalogo/artistas/artista_form.html', {'action': 'Agregar', 'artista': None})
 
 
 @login_required
 def artista_edit(request, pk):
     artista = get_object_or_404(Artista, idartista=pk)
-    return render(request, 'catalogo/artista_form.html', {'action': 'Editar', 'artista': artista})
+    return render(request, 'catalogo/artistas/artista_form.html', {'action': 'Editar', 'artista': artista})
 
 
 @login_required
@@ -215,7 +215,7 @@ def artista_delete(request, pk):
     if request.method == 'POST':
         messages.success(request, f"Artista '{artista.nombreartistico}' eliminado.")
         return redirect('artista_list')
-    return render(request, 'catalogo/confirm_delete.html', {'objeto': artista, 'tipo': 'artista'})
+    return render(request, 'catalogo/artistas/confirm_delete.html', {'objeto': artista, 'tipo': 'artista'})
 
 
 # ══════════════════════════════════════════
@@ -230,20 +230,20 @@ def album_list(request):
         albumes = albumes.filter(
             Q(tituloalbum__icontains=query) | Q(artista__nombreartistico__icontains=query)
         )
-    return render(request, 'catalogo/albums_overview.html', {'albumes': albumes, 'query': query})
+    return render(request, 'catalogo/albumes/albums_overview.html', {'albumes': albumes, 'query': query})
 
 
 @login_required
 def album_add(request):
     artistas = Artista.objects.all()
-    return render(request, 'catalogo/album_form.html', {'action': 'Agregar', 'album': None, 'artistas': artistas})
+    return render(request, 'catalogo/albumes/album_form.html', {'action': 'Agregar', 'album': None, 'artistas': artistas})
 
 
 @login_required
 def album_edit(request, pk):
     album = get_object_or_404(Album, idalbum=pk)
     artistas = Artista.objects.all()
-    return render(request, 'catalogo/album_form.html', {'action': 'Editar', 'album': album, 'artistas': artistas})
+    return render(request, 'catalogo/albumes/album_form.html', {'action': 'Editar', 'album': album, 'artistas': artistas})
 
 
 @login_required
@@ -252,7 +252,7 @@ def album_delete(request, pk):
     if request.method == 'POST':
         messages.success(request, f"Álbum '{album.tituloalbum}' eliminado.")
         return redirect('album_list')
-    return render(request, 'catalogo/confirm_delete.html', {'objeto': album, 'tipo': 'álbum'})
+    return render(request, 'catalogo/albumes/confirm_delete.html', {'objeto': album, 'tipo': 'álbum'})
 
 
 # ══════════════════════════════════════════
@@ -265,18 +265,18 @@ def genero_list(request):
     query = request.GET.get('q', '')
     if query:
         generos = generos.filter(nombregenero__icontains=query)
-    return render(request, 'catalogo/genre_overview.html', {'generos': generos, 'query': query})
+    return render(request, 'catalogo/generos/genre_overview.html', {'generos': generos, 'query': query})
 
 
 @login_required
 def genero_add(request):
-    return render(request, 'catalogo/genero_form.html', {'action': 'Agregar', 'genero': None})
+    return render(request, 'catalogo/generos/genero_form.html', {'action': 'Agregar', 'genero': None})
 
 
 @login_required
 def genero_edit(request, pk):
     genero = get_object_or_404(Genero, idgenero=pk)
-    return render(request, 'catalogo/genero_form.html', {'action': 'Editar', 'genero': genero})
+    return render(request, 'catalogo/generos/genero_form.html', {'action': 'Editar', 'genero': genero})
 
 
 @login_required
@@ -285,7 +285,7 @@ def genero_delete(request, pk):
     if request.method == 'POST':
         messages.success(request, f"Género '{genero.nombregenero}' eliminado.")
         return redirect('genero_list')
-    return render(request, 'catalogo/confirm_delete.html', {'objeto': genero, 'tipo': 'género'})
+    return render(request, 'catalogo/generos/confirm_delete.html', {'objeto': genero, 'tipo': 'género'})
 
 
 # ══════════════════════════════════════════
@@ -300,14 +300,14 @@ def colaboracion_list(request):
         colaboraciones = colaboraciones.filter(
             Q(artista__nombreartistico__icontains=query) | Q(cancion__titulocancion__icontains=query)
         )
-    return render(request, 'catalogo/colabs_overview.html', {'colaboraciones': colaboraciones, 'query': query})
+    return render(request, 'catalogo/colaboraciones/colabs_overview.html', {'colaboraciones': colaboraciones, 'query': query})
 
 
 @login_required
 def colaboracion_add(request):
     canciones = Cancion.objects.all()
     artistas = Artista.objects.all()
-    return render(request, 'catalogo/colaboracion_form.html', {
+    return render(request, 'catalogo/colaboraciones/colaboracion_form.html', {
         'action': 'Agregar', 'colaboracion': None,
         'canciones': canciones, 'artistas': artistas,
     })
@@ -318,7 +318,7 @@ def colaboracion_edit(request, pk):
     colaboracion = get_object_or_404(Colaboracion, idcolaboracion=pk)
     canciones = Cancion.objects.all()
     artistas = Artista.objects.all()
-    return render(request, 'catalogo/colaboracion_form.html', {
+    return render(request, 'catalogo/colaboraciones/colaboracion_form.html', {
         'action': 'Editar', 'colaboracion': colaboracion,
         'canciones': canciones, 'artistas': artistas,
     })
@@ -330,4 +330,4 @@ def colaboracion_delete(request, pk):
     if request.method == 'POST':
         messages.success(request, "Colaboración eliminada.")
         return redirect('colaboracion_list')
-    return render(request, 'catalogo/confirm_delete.html', {'objeto': colaboracion, 'tipo': 'colaboración'})
+    return render(request, 'catalogo/colaboraciones/confirm_delete.html', {'objeto': colaboracion, 'tipo': 'colaboración'})

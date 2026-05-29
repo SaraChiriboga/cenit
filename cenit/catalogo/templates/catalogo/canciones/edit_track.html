@@ -1,15 +1,17 @@
 {% extends "base.html" %}
 
-{% block title %}Detalle de Canción{% endblock %}
+{% block title %}Editar Canción{% endblock %}
+
 {% block breadcrumb %}
-<a href="/" class="hover:text-primary transition-colors">Dashboard</a>
+<a href="/static" class="hover:text-primary transition-colors">Dashboard</a>
 <span class="material-symbols-outlined text-[16px] mx-1">chevron_right</span>
 <span class="text-on-surface-variant">Catalog</span>
 <span class="material-symbols-outlined text-[16px] mx-1">chevron_right</span>
 <span class="text-primary font-semibold">Canciones</span>
 <span class="material-symbols-outlined text-[16px] mx-1">chevron_right</span>
-<span class="text-primary font-semibold">Detalles de Canción</span>
+<span class="text-primary font-semibold">Editar: {{ cancion.titulocancion }}</span>
 {% endblock %}
+
 {% block content %}
 <style>
     #fixed-bg {
@@ -34,14 +36,12 @@
         color: rgba(255,255,255,0.4);
         text-transform: uppercase; margin-bottom: 0.5rem; display: block;
     }
-    /* Campo en modo lectura */
     .read-field {
         background: rgba(0,0,0,0.3);
         border: 1px solid rgba(255,255,255,0.05);
         color: white; padding: 1rem; border-radius: 0.75rem;
         transition: border-color 0.2s, background 0.2s;
     }
-    /* Campo editable activado */
     .edit-input {
         width: 100%;
         background: rgba(0,0,0,0.4);
@@ -61,21 +61,12 @@
         transition: all 0.3s ease; transform: translateY(100px); opacity: 0;
     }
     #toast.show { transform: translateY(0); opacity: 1; }
-
-    /* Indicador modo edición */
-    #edit-banner {
-        display: none;
-        background: rgba(68,226,215,0.08);
-        border: 1px solid rgba(68,226,215,0.2);
-    }
-    #edit-banner.active { display: flex; }
 </style>
 
 <div id="fixed-bg"
      {% if cancion.urlportada %}style="background-image: url('{{ cancion.urlportada }}');"{% endif %}>
 </div>
 
-<!-- Toast -->
 <div id="toast" class="glass-ultra px-6 py-4 rounded-2xl border border-white/10 flex items-center gap-3">
     <span id="toast-icon" class="material-symbols-outlined text-secondary">check_circle</span>
     <span id="toast-msg" class="text-white text-sm font-medium"></span>
@@ -83,7 +74,6 @@
 
 <div class="w-full min-h-[calc(100vh-64px)] p-8">
     <div class="max-w-6xl mx-auto">
-        <!-- Header -->
         <div class="mb-6 flex items-start justify-between gap-4">
             <div>
                 <h1 class="text-4xl font-extrabold text-white" id="page-title">
@@ -91,58 +81,46 @@
                 </h1>
                 <p class="text-white/40 text-sm mt-1">TRK-{{ cancion.idcancion }}</p>
             </div>
-            <!-- Banner modo edición -->
-            <div id="edit-banner" class="items-center gap-2 px-4 py-2 rounded-xl text-secondary text-sm font-bold">
-                <span class="material-symbols-outlined text-base">edit</span>
-                Modo edición activo
+            <div class="flex items-center gap-2 px-4 py-2 rounded-xl text-secondary text-sm font-bold bg-secondary/10 border border-secondary/20">
+                <span class="material-symbols-outlined text-base">edit_note</span>
+                Editando Track
             </div>
         </div>
 
-        <!-- GRID -->
         <div class="grid grid-cols-1 xl:grid-cols-[380px_1fr] gap-8 items-start">
 
-            <!-- IZQUIERDA -->
             <div class="space-y-5">
-
-                <!-- Portada -->
                 <div class="aspect-square w-full max-w-[420px] mx-auto rounded-3xl border border-white/10 glass-ultra shadow-2xl overflow-hidden">
                     <img id="cover-img"
                          src="{{ cancion.urlportada|default:'' }}"
                          class="w-full h-full object-cover">
                 </div>
 
-                <!-- URL portada (solo visible en edición) -->
-                <div id="url-portada-wrap" class="hidden">
+                <div>
                     <label class="label-meta">URL Portada</label>
                     <input type="text" id="f-urlportada"
                            value="{{ cancion.urlportada|default:'' }}"
                            placeholder="https://..."
-                           class="edit-input"
+                           class="edit-input font-mono text-sm"
                            oninput="previewCover(this.value)">
                 </div>
 
-                <!-- Características -->
                 <div class="glass-ultra p-8 rounded-3xl">
                     <h3 class="text-sm font-semibold text-white/50 uppercase tracking-wider mb-5 flex items-center gap-2">
                         <span class="material-symbols-outlined text-base">stars</span>
                         CARACTERÍSTICAS
                     </h3>
                     <div class="grid grid-cols-2 gap-5">
-
                         <div>
-                            <label class="label-meta">Duración</label>
-                            <div id="v-duracionseg" class="read-field">{{ cancion.duracionseg }} s</div>
+                            <label class="label-meta">Duración (s)</label>
                             <input id="f-duracionseg" type="number"
                                    value="{{ cancion.duracionseg }}"
-                                   class="edit-input hidden">
+                                   class="edit-input">
                         </div>
 
                         <div>
                             <label class="label-meta">Explícita</label>
-                            <div id="v-esexplicita" class="read-field">
-                                {% if cancion.esexplicita %}Sí{% else %}No{% endif %}
-                            </div>
-                            <select id="f-esexplicita" class="edit-input hidden">
+                            <select id="f-esexplicita" class="edit-input">
                                 <option value="0" {% if not cancion.esexplicita %}selected{% endif %}>No</option>
                                 <option value="1" {% if cancion.esexplicita %}selected{% endif %}>Sí</option>
                             </select>
@@ -150,57 +128,45 @@
 
                         <div>
                             <label class="label-meta">Estado</label>
-                            <div id="v-estadopublicacion" class="read-field">{{ cancion.estadopublicacion }}</div>
-                            <select id="f-estadopublicacion" class="edit-input hidden">
+                            <select id="f-estadopublicacion" class="edit-input">
                                 {% for e in estados %}
-                                <option value="{{ e }}"
-                                    {% if cancion.estadopublicacion == e %}selected{% endif %}>{{ e }}</option>
+                                <option value="{{ e }}" {% if cancion.estadopublicacion == e %}selected{% endif %}>{{ e }}</option>
                                 {% endfor %}
                             </select>
                         </div>
 
                         <div>
                             <label class="label-meta">Género</label>
-                            <div id="v-genero" class="read-field">{{ cancion.genero.nombregenero|default:"—" }}</div>
-                            <select id="f-genero" class="edit-input hidden">
+                            <select id="f-genero" class="edit-input">
                                 {% for g in generos %}
-                                <option value="{{ g.idgenero }}"
-                                    {% if cancion.genero_id == g.idgenero %}selected{% endif %}>
+                                <option value="{{ g.idgenero }}" {% if cancion.genero_id == g.idgenero %}selected{% endif %}>
                                     {{ g.nombregenero }}
                                 </option>
                                 {% endfor %}
                             </select>
                         </div>
-
                     </div>
                 </div>
             </div>
 
-            <!-- DERECHA -->
             <div class="space-y-6">
-
                 <div class="glass-ultra p-8 rounded-3xl space-y-8">
-
-                    <!-- Información general -->
                     <div>
                         <h3 class="text-sm font-semibold text-white/50 uppercase tracking-wider mb-5 flex items-center gap-2">
                             <span class="material-symbols-outlined text-base">info</span>
                             INFORMACIÓN GENERAL
                         </h3>
                         <div class="grid grid-cols-2 gap-6">
-
                             <div>
                                 <label class="label-meta">Título</label>
-                                <div id="v-titulocancion" class="read-field">{{ cancion.titulocancion }}</div>
                                 <input id="f-titulocancion" type="text"
                                        value="{{ cancion.titulocancion }}"
-                                       class="edit-input hidden">
+                                       class="edit-input">
                             </div>
 
                             <div>
                                 <label class="label-meta">Álbum</label>
-                                <div id="v-album" class="read-field">{{ cancion.album.tituloalbum|default:"N/A" }}</div>
-                                <select id="f-album" class="edit-input hidden" onchange="updateAlbumData(this.value)">
+                                <select id="f-album" class="edit-input" onchange="updateAlbumData(this.value)">
                                     {% for a in albumes %}
                                     <option value="{{ a.idalbum }}" {% if cancion.album_id == a.idalbum %}selected{% endif %}>
                                         {{ a.tituloalbum }}
@@ -210,19 +176,19 @@
                             </div>
 
                             <div>
-                                <label class="label-meta">Artista</label>
-                                <div id="v-artista" class="read-field">{{ cancion.album.artista.nombreartistico|default:"N/A" }}</div>
+                                <label class="label-meta">Artista (Relacionado al Álbum)</label>
+                                <div id="v-artista" class="read-field opacity-60 cursor-not-allowed">
+                                    {{ cancion.album.artista.nombreartistico|default:"N/A" }}
+                                </div>
                             </div>
 
                             <div>
                                 <label class="label-meta">ID de Canción</label>
-                                <div class="read-field font-mono">{{ cancion.idcancion }}</div>
+                                <div class="read-field font-mono opacity-60 cursor-not-allowed">{{ cancion.idcancion }}</div>
                             </div>
-
                         </div>
                     </div>
 
-                    <!-- Enlaces -->
                     <div>
                         <h3 class="text-sm font-semibold text-white/50 uppercase tracking-wider mb-5 flex items-center gap-2">
                             <span class="material-symbols-outlined text-base">link</span>
@@ -231,48 +197,27 @@
                         <div class="space-y-5">
                             <div>
                                 <label class="label-meta">Spotify URL</label>
-                                <div class="read-field font-mono text-xs break-all">
+                                <div class="read-field font-mono text-xs break-all opacity-60">
                                     {{ cancion.spotifyurlapi|default:"No disponible" }}
-                                </div>
-                            </div>
-                            <div>
-                                <label class="label-meta">URL Portada (actual)</label>
-                                <div class="read-field font-mono text-xs break-all">
-                                    {{ cancion.urlportada|default:"No disponible" }}
                                 </div>
                             </div>
                         </div>
                     </div>
-
                 </div>
 
-                <!-- Botones -->
-                    <div class="flex justify-end items-center gap-4 pt-2">
-                        <a href="{% url 'songs_overview' %}"
-                           class="px-8 py-4 text-white/60 hover:text-white transition-all text-sm font-medium">
-                            Volver
-                        </a>
+                <div class="flex justify-end items-center gap-4 pt-2">
+                    <a href="{% url 'songs_overview' %}"
+                       class="px-8 py-4 text-white/60 hover:text-white transition-all text-sm font-medium">
+                        Cancelar
+                    </a>
 
-                        <button id="btn-toggle-edit"
-                                onclick="toggleEdit()"
-                                class="inline-flex items-center gap-2 px-8 py-4 bg-white/10 text-white font-bold rounded-xl hover:bg-white/20 transition-all text-sm">
-                            <span class="material-symbols-outlined text-[20px]" id="edit-icon">edit</span>
-                            <span id="edit-label">Editar</span>
-                        </button>
-
-                        <button id="btn-save"
-                                onclick="saveChanges()"
-                                class="hidden inline-flex items-center gap-2 px-8 py-4 bg-secondary text-black font-bold rounded-xl hover:scale-105 transition-transform shadow-lg shadow-secondary/20 text-sm">
-                            <span class="material-symbols-outlined text-[20px]">save</span>
-                            Guardar Cambios
-                        </button>
-
-                        <button onclick="deleteTrack('{{ cancion.idcancion }}')"
-                                class="inline-flex items-center gap-2 px-8 py-4 bg-red-500/20 text-red-400 font-bold rounded-xl hover:bg-red-500/30 transition-all text-sm">
-                            <span class="material-symbols-outlined text-[20px]">delete</span>
-                            Eliminar
-                        </button>
-                    </div>
+                    <button id="btn-save"
+                            onclick="saveChanges()"
+                            class="inline-flex items-center gap-2 px-10 py-4 bg-secondary text-black font-bold rounded-xl hover:scale-105 transition-transform shadow-lg shadow-secondary/20 text-sm">
+                        <span class="material-symbols-outlined text-[20px]">save</span>
+                        Guardar Cambios
+                    </button>
+                </div>
             </div>
         </div>
     </div>
@@ -281,20 +226,8 @@
 <script>
     const CSRF = '{{ csrf_token }}';
     const CANCION_ID = {{ cancion.idcancion }};
-    let editMode = false;
 
-    // Pares [div-lectura, input-edición]
-    const FIELDS = [
-        ['v-titulocancion',    'f-titulocancion'],
-        ['v-album',            'f-album'],
-        ['v-duracionseg',      'f-duracionseg'],
-        ['v-esexplicita',      'f-esexplicita'],
-        ['v-estadopublicacion','f-estadopublicacion'],
-        ['v-genero',           'f-genero'],
-    ];
-
-    // 1. Generamos un diccionario JSON desde Django con las portadas y artistas de cada álbum.
-    // Usamos escapejs para evitar que comillas en los nombres rompan el script.
+    // Diccionario JSON desde Django para portadas y artistas
     const albumsData = {
         {% for a in albumes %}
         "{{ a.idalbum }}": {
@@ -304,57 +237,19 @@
         {% endfor %}
     };
 
-    // 2. Función que se ejecuta al cambiar el select
     function updateAlbumData(albumId) {
         const data = albumsData[albumId];
 
         if (data) {
-            // Actualizar URL en el input oculto/editable
             document.getElementById('f-urlportada').value = data.cover;
-
-            // Actualizar la imagen de la portada y el fondo
             if (data.cover) {
                 document.getElementById('cover-img').src = data.cover;
                 document.getElementById('fixed-bg').style.backgroundImage = `url('${data.cover}')`;
             }
-
-            // Actualizar el nombre del artista en el DOM
             const artistDisplay = document.getElementById('v-artista');
             if (artistDisplay) {
                 artistDisplay.textContent = data.artist;
             }
-        }
-    }
-    function toggleEdit() {
-        editMode = !editMode;
-
-        FIELDS.forEach(([vId, fId]) => {
-            document.getElementById(vId).classList.toggle('hidden', editMode);
-            document.getElementById(fId).classList.toggle('hidden', !editMode);
-        });
-
-        document.getElementById('url-portada-wrap').classList.toggle('hidden', !editMode);
-        document.getElementById('btn-save').classList.toggle('hidden', !editMode);
-        document.getElementById('edit-banner').classList.toggle('active', editMode);
-
-        const icon  = document.getElementById('edit-icon');
-        const label = document.getElementById('edit-label');
-        const btn   = document.getElementById('btn-toggle-edit');
-
-        if (editMode) {
-            icon.textContent  = 'close';
-            label.textContent = 'Cancelar';
-            btn.classList.replace('bg-white/10', 'bg-red-500/20');
-            btn.classList.replace('hover:bg-white/20', 'hover:bg-red-500/30');
-            btn.classList.add('text-red-400');
-            btn.classList.remove('text-white');
-        } else {
-            icon.textContent  = 'edit';
-            label.textContent = 'Editar';
-            btn.classList.replace('bg-red-500/20', 'bg-white/10');
-            btn.classList.replace('hover:bg-red-500/30', 'hover:bg-white/20');
-            btn.classList.remove('text-red-400');
-            btn.classList.add('text-white');
         }
     }
 
@@ -382,39 +277,28 @@
         btn.innerHTML = '<span class="material-symbols-outlined animate-spin">progress_activity</span> Guardando...';
 
         const formData = new FormData();
-        formData.append('csrfmiddlewaretoken', CSRF);
         formData.append('titulocancion',      document.getElementById('f-titulocancion').value);
         formData.append('album',              document.getElementById('f-album').value);
         formData.append('genero',             document.getElementById('f-genero').value);
         formData.append('duracionseg',        document.getElementById('f-duracionseg').value);
         formData.append('estadopublicacion',  document.getElementById('f-estadopublicacion').value);
         formData.append('urlportada',         document.getElementById('f-urlportada').value);
-        // esexplicita: select devuelve "0" o "1"
+        
         if (document.getElementById('f-esexplicita').value === '1') {
             formData.append('esexplicita', 'on');
         }
 
         try {
             const res  = await fetch(`/catalogo/canciones/${CANCION_ID}/edit/`, {
-                method: 'POST', body: formData
+                method: 'POST', 
+                headers: { 'X-CSRFToken': CSRF }, // <-- AÑADIDO POR SEGURIDAD
+                body: formData
             });
             const data = await res.json();
 
             if (data.status === 'success') {
                 showToast('Cambios guardados correctamente.', true);
-                // Actualizar los displays de lectura sin recargar
-                document.getElementById('v-titulocancion').textContent    = document.getElementById('f-titulocancion').value;
-                document.getElementById('v-album').textContent            = document.getElementById('f-album').options[document.getElementById('f-album').selectedIndex].text;
-                document.getElementById('v-duracionseg').textContent      = document.getElementById('f-duracionseg').value + ' s';
-                document.getElementById('v-esexplicita').textContent      = document.getElementById('f-esexplicita').value === '1' ? 'Sí' : 'No';
-                document.getElementById('v-estadopublicacion').textContent= document.getElementById('f-estadopublicacion').value;
-                document.getElementById('v-genero').textContent           = document.getElementById('f-genero').options[document.getElementById('f-genero').selectedIndex].text;
-                document.getElementById('page-title').textContent         = document.getElementById('f-titulocancion').value;
-                if (data.urlportada) {
-                    document.getElementById('cover-img').src = data.urlportada;
-                    document.getElementById('fixed-bg').style.backgroundImage = `url('${data.urlportada}')`;
-                }
-                setTimeout(() => toggleEdit(), 400); // Vuelve a modo lectura
+                document.getElementById('page-title').textContent = document.getElementById('f-titulocancion').value;
             } else {
                 showToast(data.message || 'Error al guardar.', false);
             }
@@ -423,19 +307,6 @@
         } finally {
             btn.disabled = false;
             btn.innerHTML = '<span class="material-symbols-outlined">save</span> Guardar Cambios';
-        }
-    }
-
-    async function deleteTrack(id) {
-        if (!confirm('¿Estás seguro de eliminar este track?')) return;
-        const res = await fetch(`/catalogo/canciones/${id}/delete/`, {
-            method: 'POST',
-            headers: { 'X-CSRFToken': CSRF }
-        });
-        if (res.ok) {
-            window.location.href = "{% url 'songs_overview' %}";
-        } else {
-            showToast('Error al eliminar.', false);
         }
     }
 </script>

@@ -23,6 +23,7 @@ class Artista(models.Model):
     estadoactivo = models.CharField(db_column='estadoActivo', max_length=50,
                                     db_collation='SQL_Latin1_General_CP1_CI_AS')
     fecharegistro = models.DateTimeField(db_column='fechaRegistro')
+    urlperfil = models.CharField(db_column='urlPerfil', max_length=500, blank=True, null=True)
 
     class Meta:
         managed = False
