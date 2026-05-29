@@ -280,17 +280,20 @@ def suscripcion_add(request):
 
 @login_required
 def suscripcion_edit(request, pk):
+    from usuarios.models import Usuario  # ← import local igual que en add
     suscripcion = get_object_or_404(Suscripcion, pk=pk)
-    planes      = TipoSuscripcion.objects.all()
+    planes = TipoSuscripcion.objects.all()
     promociones = Promocion.objects.filter(estadoactivo=True)
+    usuarios = Usuario.objects.all()   # ← AGREGAR
 
     if request.method == 'POST':
         try:
-            suscripcion.fechainicio       = request.POST.get('fechainicio')
-            suscripcion.fechafin          = request.POST.get('fechafin')
-            suscripcion.estado            = request.POST.get('estado')
+            suscripcion.fechainicio = request.POST.get('fechainicio')
+            suscripcion.fechafin = request.POST.get('fechafin')
+            suscripcion.estado = request.POST.get('estado')
             suscripcion.tiposuscripcion_id = request.POST.get('tiposuscripcion')
-            suscripcion.promocion_id      = request.POST.get('promocion') or None
+            suscripcion.promocion_id = request.POST.get('promocion') or None
+            suscripcion.usuario_id = request.POST.get('usuario') or None   # ← AGREGAR
             suscripcion.save()
             messages.success(request, 'Suscripción actualizada.')
             return redirect('suscripcion_list')
@@ -302,6 +305,7 @@ def suscripcion_edit(request, pk):
         'suscripcion': suscripcion,
         'planes': planes,
         'promociones': promociones,
+        'usuarios': usuarios,   
         'estados': ['Activa', 'Cancelada', 'Expirada'],
     })
 
