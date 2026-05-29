@@ -7,6 +7,7 @@ from django.shortcuts import render, get_object_or_404, redirect
 from django.contrib.auth.decorators import login_required
 from django.db.models import Q
 from django.views.decorators.csrf import csrf_exempt
+from django.db import transaction
 
 from .models import Cancion, Artista, Album, Genero, Colaboracion
 from .spotify_service import SpotifyClient
@@ -246,21 +247,56 @@ def edit_artist(request, pk):
     }
     return render(request, 'catalogo/artistas/edit_artist.html', context)
 
+
 @login_required
 def delete_artist(request, pk):
-    # Validamos que solo acepte POST por seguridad
     if request.method == 'POST':
         try:
-            with connection.cursor() as cursor:
-                cursor.execute("DELETE FROM [Catalogo].[Artista] WHERE idArtista=%s", [pk])
-                # connection.commit()
+            # transaction.atomic() asegura que se borre todo junto o no se borre nada
+            with transaction.atomic():
+                with connection.cursor() as cursor:
+                    # 1. Eliminar Seguimientos del artista (ESQUEMA: Usuario)
+                    cursor.execute("DELETE FROM [Usuario].[Seguimiento] WHERE Artista_idArtista = %s", [pk])
+
+                    # 2. Eliminar Colaboraciones donde este artista fue invitado (ESQUEMA: Catalogo)
+                    cursor.execute("DELETE FROM [Catalogo].[Colaboracion] WHERE Artista_idArtista = %s", [pk])
+
+                    # --- PREPARAMOS LA SUBCONSULTA DE CANCIONES ---
+                    query_canciones = """
+                        SELECT idCancion FROM [Catalogo].[Cancion] c
+                        INNER JOIN [Catalogo].[Album] a ON c.Album_idAlbum = a.idAlbum
+                        WHERE a.Artista_idArtista = %s
+                    """
+
+                    # 3. Eliminar dependencias de las CANCIONES del artista respetando sus esquemas
+                    cursor.execute(
+                        f"DELETE FROM [Catalogo].[Colaboracion] WHERE Cancion_idCancion IN ({query_canciones})", [pk])
+                    cursor.execute(
+                        f"DELETE FROM [Usuario].[CancionFavorita] WHERE Cancion_idCancion IN ({query_canciones})", [pk])
+                    cursor.execute(
+                        f"DELETE FROM [Usuario].[PlaylistCancion] WHERE Cancion_idCancion IN ({query_canciones})", [pk])
+                    cursor.execute(
+                        f"DELETE FROM [Auditoria].[EstadisticaDiaria] WHERE Cancion_idCancion IN ({query_canciones})",
+                        [pk])
+
+                    # 4. Eliminar las Canciones en sí (ESQUEMA: Catalogo)
+                    cursor.execute("""
+                        DELETE FROM [Catalogo].[Cancion] 
+                        WHERE Album_idAlbum IN (SELECT idAlbum FROM [Catalogo].[Album] WHERE Artista_idArtista = %s)
+                    """, [pk])
+
+                    # 5. Eliminar los Álbumes (ESQUEMA: Catalogo)
+                    cursor.execute("DELETE FROM [Catalogo].[Album] WHERE Artista_idArtista = %s", [pk])
+
+                    # 6. Finalmente, Eliminar al Artista (ESQUEMA: Catalogo)
+                    cursor.execute("DELETE FROM [Catalogo].[Artista] WHERE idArtista = %s", [pk])
+
             return JsonResponse({'status': 'success'})
+
         except Exception as e:
-            # Capturamos errores de llave foránea (ej. si el artista tiene álbumes)
-            return JsonResponse({'status': 'error', 'message': str(e)}, status=400)
+            return JsonResponse({'status': 'error', 'message': f"Error al eliminar en cascada: {str(e)}"}, status=400)
 
     return JsonResponse({'status': 'error', 'message': 'Método no permitido'}, status=405)
-
 
 @login_required
 @csrf_exempt

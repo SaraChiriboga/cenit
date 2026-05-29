@@ -197,13 +197,32 @@
                         Guardar Cambios
                     </button>
 
-                    <button onclick="deleteArtist('{{ artista.idartista }}')"
+                    <button onclick="showDeleteModal()"
                             class="inline-flex items-center gap-2 px-8 py-4 bg-red-500/20 text-red-400 font-bold rounded-xl hover:bg-red-500/30 transition-all text-sm">
                         <span class="material-symbols-outlined text-[20px]">delete</span>
                         Eliminar
                     </button>
                 </div>
             </div>
+        </div>
+    </div>
+</div>
+
+<div id="delete-modal" class="fixed inset-0 z-[100] hidden items-center justify-center bg-black/60 backdrop-blur-sm p-4 transition-opacity">
+    <div class="glass-ultra p-8 rounded-3xl w-full max-w-sm text-center border border-white/10 shadow-2xl transform transition-transform scale-95" id="delete-modal-content">
+        <span class="material-symbols-outlined text-5xl text-red-500 mb-4">delete_forever</span>
+
+        <h2 id="delete-modal-title" class="text-xl font-bold text-white mb-2">¿Eliminar artista?</h2>
+
+        <p class="text-white/60 mb-8 text-sm">Esta acción no se puede deshacer. ¿Estás seguro de que quieres borrar permanentemente este perfil?</p>
+
+        <div class="flex gap-4">
+            <button onclick="closeModal()" class="flex-1 py-3 bg-white/5 hover:bg-white/10 text-white font-bold rounded-xl transition-all">
+                Cancelar
+            </button>
+            <button id="btn-confirm-delete" onclick="confirmDelete()" class="flex-1 py-3 bg-red-600 hover:bg-red-700 text-white font-bold rounded-xl transition-all flex items-center justify-center gap-2">
+                Eliminar
+            </button>
         </div>
     </div>
 </div>
@@ -346,6 +365,63 @@
             }
         } catch (error) {
             showToast('Error de conexión al intentar eliminar.', false);
+        }
+    }
+
+    // --- FUNCIONES DEL MODAL DE ELIMINACIÓN ---
+    function showDeleteModal() {
+        const modal = document.getElementById('delete-modal');
+        const content = document.getElementById('delete-modal-content');
+        modal.classList.remove('hidden');
+        modal.classList.add('flex');
+
+        // Efecto de entrada suave
+        setTimeout(() => {
+            content.classList.remove('scale-95');
+            content.classList.add('scale-100');
+        }, 10);
+    }
+
+    function closeModal() {
+        const modal = document.getElementById('delete-modal');
+        const content = document.getElementById('delete-modal-content');
+
+        // Efecto de salida suave
+        content.classList.remove('scale-100');
+        content.classList.add('scale-95');
+
+        setTimeout(() => {
+            modal.classList.add('hidden');
+            modal.classList.remove('flex');
+        }, 150);
+    }
+
+    async function confirmDelete() {
+        const btn = document.getElementById('btn-confirm-delete');
+        btn.disabled = true;
+        btn.innerHTML = '<span class="material-symbols-outlined animate-spin text-[20px]">progress_activity</span> Borrando...';
+
+        try {
+            // Usamos la variable global ARTISTA_ID que ya tienes arriba en tu script
+            const res = await fetch(`/catalogo/artistas/${ARTISTA_ID}/delete/`, {
+                method: 'POST',
+                headers: { 'X-CSRFToken': CSRF }
+            });
+            const data = await res.json();
+
+            if (res.ok && data.status === 'success') {
+                window.location.href = "{% url 'artists_overview' %}";
+            } else {
+                showToast(data.message || 'Error al eliminar el artista.', false);
+                closeModal();
+            }
+        } catch (error) {
+            showToast('Error de conexión al intentar eliminar.', false);
+            closeModal();
+        } finally {
+            // Restaurar botón por si falla
+            btn.disabled = false;
+            btn.innerHTML = 'Eliminar';
         }
     }
 </script>
