@@ -110,10 +110,10 @@
                                     <span class="material-symbols-outlined">edit</span>
                                 </a>
 
-                                <button onclick="deleteTrack('{{ cancion.idcancion }}')"
-                                        class="p-2 text-on-surface-variant hover:text-error transition-colors"
-                                        title="Delete">
-                                    <span class="material-symbols-outlined text-[20px]">delete</span>
+                                <button onclick="showDeleteModal('{{ cancion.idcancion }}', '{{ cancion.titulocancion|escapejs }}')"
+                                        class="p-2 text-on-surface-variant hover:text-primary transition-colors"
+                                        title="Eliminar">
+                                    <span class="material-symbols-outlined">delete</span>
                                 </button>
                             </div>
                         </td>
@@ -139,5 +139,96 @@
             </div>
         </div>
     </div>
+
+    <div id="delete-modal" class="fixed inset-0 z-[100] hidden items-center justify-center bg-black/60 backdrop-blur-sm p-4 transition-opacity">
+        <div class="glass-ultra p-8 rounded-3xl w-full max-w-sm text-center border border-white/10 shadow-2xl transform transition-transform scale-95" id="delete-modal-content">
+            <span class="material-symbols-outlined text-5xl text-red-500 mb-4">delete_forever</span>
+
+            <h2 id="delete-modal-title" class="text-xl font-bold text-white mb-2">¿Eliminar canción?</h2>
+
+            <p class="text-white/60 mb-8 text-sm">Esta acción no se puede deshacer. ¿Estás seguro de que quieres borrar permanentemente este track?</p>
+
+            <div class="flex gap-4">
+                <button onclick="closeModal()" class="flex-1 py-3 bg-white/5 hover:bg-white/10 text-white font-bold rounded-xl transition-all">
+                    Cancelar
+                </button>
+                <button id="btn-confirm-delete" onclick="confirmDelete()" class="flex-1 py-3 bg-red-600 hover:bg-red-700 text-white font-bold rounded-xl transition-all flex items-center justify-center gap-2">
+                    Eliminar
+                </button>
+            </div>
+        </div>
+    </div>
 </section>
+<script>
+    const CSRF = '{{ csrf_token }}';
+    let trackToDeleteId = null; // Guarda el ID de la canción seleccionada
+
+    // 1. Mostrar Modal y setear datos
+    function showDeleteModal(id, titulo) {
+        trackToDeleteId = id;
+
+        // Personalizamos el título del modal para mejor UX
+        document.getElementById('delete-modal-title').textContent = `¿Eliminar "${titulo}"?`;
+
+        const modal = document.getElementById('delete-modal');
+        const content = document.getElementById('delete-modal-content');
+
+        modal.classList.remove('hidden');
+        modal.classList.add('flex');
+
+        // Pequeño delay para el efecto de entrada (scale)
+        setTimeout(() => {
+            content.classList.remove('scale-95');
+            content.classList.add('scale-100');
+        }, 10);
+    }
+
+    // 2. Cerrar Modal
+    function closeModal() {
+        trackToDeleteId = null;
+
+        const modal = document.getElementById('delete-modal');
+        const content = document.getElementById('delete-modal-content');
+
+        // Efecto de salida
+        content.classList.remove('scale-100');
+        content.classList.add('scale-95');
+
+        setTimeout(() => {
+            modal.classList.add('hidden');
+            modal.classList.remove('flex');
+        }, 150);
+    }
+
+    // 3. Confirmar Eliminación
+    async function confirmDelete() {
+        if (!trackToDeleteId) return;
+
+        const btn = document.getElementById('btn-confirm-delete');
+        btn.disabled = true;
+        btn.innerHTML = '<span class="material-symbols-outlined animate-spin text-[20px]">progress_activity</span> Borrando...';
+
+        try {
+            const res = await fetch(`/catalogo/canciones/${trackToDeleteId}/delete/`, {
+                method: 'POST',
+                headers: { 'X-CSRFToken': CSRF }
+            });
+
+            if (res.ok) {
+                // Recargamos la página suavemente para que la tabla se actualice
+                window.location.reload();
+            } else {
+                alert('Error al eliminar el track.');
+                closeModal();
+            }
+        } catch (error) {
+            alert('Error de red al intentar eliminar.');
+            closeModal();
+        } finally {
+            // Restaurar botón por si acaso
+            btn.disabled = false;
+            btn.innerHTML = 'Eliminar';
+        }
+    }
+</script>
 {% endblock %}
