@@ -1,3 +1,5 @@
+import urllib
+
 import requests
 from django.contrib import messages
 from django.http import JsonResponse
@@ -15,7 +17,7 @@ ESTADOS_PUBLICACION = ['Borrador', 'Programada', 'Publicada']
 # ══════════════════════════════════════════
 
 @login_required
-def catalog_overview(request):
+def songs_overview(request):
     canciones_db = Cancion.objects.select_related('album').all()
     query = request.GET.get('q', '')
     if query:
@@ -185,9 +187,7 @@ def edit_track(request, pk):
 # ══════════════════════════════════════════
 #  ARTISTAS
 # ══════════════════════════════════════════
-
-@login_required
-def artista_list(request):
+def artists_overview(request):
     artistas = Artista.objects.all()
     query = request.GET.get('q', '')
     if query:
@@ -196,27 +196,137 @@ def artista_list(request):
         )
     return render(request, 'catalogo/artistas/artists_overview.html', {'artistas': artistas, 'query': query})
 
-
 @login_required
-def artista_add(request):
-    # TODO: implementar lógica de guardado
-    return render(request, 'catalogo/artistas/artista_form.html', {'action': 'Agregar', 'artista': None})
-
-
-@login_required
-def artista_edit(request, pk):
+def read_artist(request, pk):
     artista = get_object_or_404(Artista, idartista=pk)
-    return render(request, 'catalogo/artistas/artista_form.html', {'action': 'Editar', 'artista': artista})
-
+    return render(request, 'catalogo/artistas/read_artist.html', {'artista': artista})
 
 @login_required
-def artista_delete(request, pk):
+def edit_artist(request, pk):
     artista = get_object_or_404(Artista, idartista=pk)
+
     if request.method == 'POST':
-        messages.success(request, f"Artista '{artista.nombreartistico}' eliminado.")
-        return redirect('artista_list')
-    return render(request, 'catalogo/artistas/confirm_delete.html', {'objeto': artista, 'tipo': 'artista'})
+        with connection.cursor() as cursor:
+            cursor.execute("""
+                UPDATE [Catalogo].[Artista]
+                SET nombreArtistico=%s, 
+                    biografia=%s, 
+                    paisOrigen=%s,
+                    estadoActivo=%s, 
+                    urlPerfil=%s
+                WHERE idArtista=%s
+            """, [
+                request.POST.get('nombreartistico'),
+                request.POST.get('biografia'),
+                request.POST.get('paisorigen'),
+                request.POST.get('estadoactivo'),
+                request.POST.get('urlperfil'),
+                pk
+            ])
+            # connection.commit() # Descomentar si tu SQL Server lo requiere
 
+        return JsonResponse({'status': 'success'})
+
+    # Variables para los <select> del formulario
+    estados_actividad = ['Vigente', 'Retirado', 'Fallecido']
+
+    context = {
+        'artista': artista,
+        'estados': estados_actividad
+    }
+    return render(request, 'catalogo/artistas/edit_artist.html', context)
+
+@login_required
+def delete_artist(request, pk):
+    # Validamos que solo acepte POST por seguridad
+    if request.method == 'POST':
+        try:
+            with connection.cursor() as cursor:
+                cursor.execute("DELETE FROM [Catalogo].[Artista] WHERE idArtista=%s", [pk])
+                # connection.commit()
+            return JsonResponse({'status': 'success'})
+        except Exception as e:
+            # Capturamos errores de llave foránea (ej. si el artista tiene álbumes)
+            return JsonResponse({'status': 'error', 'message': str(e)}, status=400)
+
+    return JsonResponse({'status': 'error', 'message': 'Método no permitido'}, status=405)
+
+
+@login_required
+@csrf_exempt
+def add_artist(request):
+    if request.method == 'GET':
+        estados_actividad = ['Vigente', 'Archivado']
+        return render(request, 'catalogo/artistas/add_artist.html', {
+            'estados': estados_actividad
+        })
+
+    if request.method == 'POST':
+        try:
+            nombre = request.POST.get('nombreartistico')
+            biografia = request.POST.get('biografia', '')
+            pais = request.POST.get('paisorigen', '')
+            estado = request.POST.get('estadoactivo', 'Vigente')
+            url_perfil = request.POST.get('urlperfil', '')
+
+            if not nombre:
+                return JsonResponse({'status': 'error', 'message': 'Falta el nombre artístico.'}, status=400)
+
+            if Artista.objects.filter(nombreartistico__iexact=nombre).exists():
+                return JsonResponse({'status': 'error', 'message': 'El artista ya está registrado.'}, status=400)
+
+            with connection.cursor() as cursor:
+                cursor.execute("""
+                    INSERT INTO [Catalogo].[Artista] 
+                    (nombreArtistico, biografia, paisOrigen, estadoActivo, fechaRegistro, urlPerfil)
+                    VALUES (%s, %s, %s, %s, GETDATE(), %s)
+                """, [nombre, biografia, pais, estado, url_perfil])
+
+            return JsonResponse({'status': 'success', 'message': 'Artista guardado correctamente.'})
+
+        except Exception as e:
+            return JsonResponse({'status': 'error', 'message': str(e)}, status=400)
+
+    return JsonResponse({'status': 'error', 'message': 'Método no permitido'}, status=405)
+
+
+@login_required
+def search_artist_spotify_ajax(request):
+    """Busca artistas en Spotify para el autocompletado"""
+    query = request.GET.get('q', '').strip()
+    if not query:
+        return JsonResponse({'error': 'No query provided'}, status=400)
+
+    try:
+        spotify = SpotifyClient()
+        # Asumiendo que tu SpotifyClient maneja el token internamente.
+        # Si no tienes un método específico para artistas, hacemos la petición manual usando su token:
+        token = spotify.get_token() if hasattr(spotify, 'get_token') else spotify.token
+
+        headers = {'Authorization': f'Bearer {token}'}
+        url = f"https://api.spotify.com/v1/search?q={urllib.parse.quote(query)}&type=artist&limit=5"
+
+        res = requests.get(url, headers=headers)
+        data = res.json()
+        items = data.get('artists', {}).get('items', [])
+
+        results = []
+        for item in items:
+            images = item.get('images', [])
+            image_url = images[0]['url'] if images else ''
+            # Usamos los géneros de Spotify como una biografía inicial autocompletada
+            generos = ", ".join(item.get('genres', [])).title()
+
+            results.append({
+                'name': item.get('name'),
+                'image': image_url,
+                'genres': f"Géneros principales: {generos}" if generos else "",
+                'spotify_url': item.get('external_urls', {}).get('spotify', '')
+            })
+
+        return JsonResponse(results, safe=False)
+    except Exception as e:
+        return JsonResponse({'error': 'Error conectando con Spotify'}, status=500)
 
 # ══════════════════════════════════════════
 #  ÁLBUMES

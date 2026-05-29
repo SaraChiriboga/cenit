@@ -5,7 +5,7 @@ from catalogo import views as catalogo_views # Importas tus vistas
 
 urlpatterns = [
     # Ruta raíz del sitio web: apunta directo a tu vista de catálogo
-    path('', catalogo_views.catalog_overview, name='catalog_overview'),
+    path('', catalogo_views.songs_overview, name='songs_overview'),
     
     # Rutas del módulo de catálogo (para los detalles, altas, bajas)
     path('catalogo/', include('catalogo.urls')),

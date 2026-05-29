@@ -273,7 +273,7 @@ select option {
                 </div>
 
                 <div class="flex justify-end gap-6 pt-4">
-                    <a href="{% url 'catalog_overview' %}" class="px-8 py-4 text-white/60 hover:text-white transition-all">Cancelar</a>
+                    <a href="{% url 'songs_overview' %}" class="px-8 py-4 text-white/60 hover:text-white transition-all">Cancelar</a>
                     <button type="submit"
                             class="px-12 py-4 bg-secondary text-background font-bold rounded-xl hover:scale-105 transition-transform shadow-lg shadow-secondary/20">
                         Guardar Track
@@ -499,7 +499,14 @@ select option {
             msgContainer.innerHTML = `<div class="text-red-400 text-xs mt-1">⚠️ "${nombre}" no existe. <a href="${createUrl}?nombre=${encodeURIComponent(nombre)}" class="error-link" target="_blank">Crear ${tipo}</a></div>`;
         }
 
-        document.querySelector('form').onsubmit = async (e) => {
+        async function verificarDuplicado(titulo) {
+            const res = await fetch(`{% url 'check_existence' %}?tipo=cancion&nombre=${encodeURIComponent(titulo)}`);
+            const data = await res.json();
+            return data.existe;
+        }
+    }
+
+    document.querySelector('form').onsubmit = async (e) => {
             e.preventDefault();
             const form = e.target;
             const formData = new FormData(form);
@@ -549,12 +556,5 @@ select option {
                 setTimeout(() => toast.remove(), 300);
             }, 3500);
         }
-
-        async function verificarDuplicado(titulo) {
-            const res = await fetch(`{% url 'check_existence' %}?tipo=cancion&nombre=${encodeURIComponent(titulo)}`);
-            const data = await res.json();
-            return data.existe; // Asegúrate de tener 'cancion' en tu vista de verificación
-        }
-    }
 </script>
 {% endblock %}
