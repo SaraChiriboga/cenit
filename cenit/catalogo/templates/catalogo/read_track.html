@@ -1,7 +1,15 @@
 {% extends "base.html" %}
 
 {% block title %}Detalle de Canción{% endblock %}
-
+{% block breadcrumb %}
+<a href="/" class="hover:text-primary transition-colors">Dashboard</a>
+<span class="material-symbols-outlined text-[16px] mx-1">chevron_right</span>
+<span class="text-on-surface-variant">Catalog</span>
+<span class="material-symbols-outlined text-[16px] mx-1">chevron_right</span>
+<span class="text-primary font-semibold">Canciones</span>
+<span class="material-symbols-outlined text-[16px] mx-1">chevron_right</span>
+<span class="text-primary font-semibold">Detalles de Canción</span>
+{% endblock %}
 {% block content %}
 <style>
     #fixed-bg {
@@ -75,7 +83,6 @@
 
 <div class="w-full min-h-[calc(100vh-64px)] p-8">
     <div class="max-w-6xl mx-auto">
-
         <!-- Header -->
         <div class="mb-6 flex items-start justify-between gap-4">
             <div>
@@ -193,10 +200,9 @@
                             <div>
                                 <label class="label-meta">Álbum</label>
                                 <div id="v-album" class="read-field">{{ cancion.album.tituloalbum|default:"N/A" }}</div>
-                                <select id="f-album" class="edit-input hidden">
+                                <select id="f-album" class="edit-input hidden" onchange="updateAlbumData(this.value)">
                                     {% for a in albumes %}
-                                    <option value="{{ a.idalbum }}"
-                                        {% if cancion.album_id == a.idalbum %}selected{% endif %}>
+                                    <option value="{{ a.idalbum }}" {% if cancion.album_id == a.idalbum %}selected{% endif %}>
                                         {{ a.tituloalbum }}
                                     </option>
                                     {% endfor %}
@@ -205,7 +211,7 @@
 
                             <div>
                                 <label class="label-meta">Artista</label>
-                                <div class="read-field">{{ cancion.album.artista.nombreartistico|default:"N/A" }}</div>
+                                <div id="v-artista" class="read-field">{{ cancion.album.artista.nombreartistico|default:"N/A" }}</div>
                             </div>
 
                             <div>
@@ -250,7 +256,7 @@
                         <button id="btn-toggle-edit"
                                 onclick="toggleEdit()"
                                 class="inline-flex items-center gap-2 px-8 py-4 bg-white/10 text-white font-bold rounded-xl hover:bg-white/20 transition-all text-sm">
-                            <span class="material-symbols-outlined text-[20px]">edit</span>
+                            <span class="material-symbols-outlined text-[20px]" id="edit-icon">edit</span>
                             <span id="edit-label">Editar</span>
                         </button>
 
@@ -287,6 +293,38 @@
         ['v-genero',           'f-genero'],
     ];
 
+    // 1. Generamos un diccionario JSON desde Django con las portadas y artistas de cada álbum.
+    // Usamos escapejs para evitar que comillas en los nombres rompan el script.
+    const albumsData = {
+        {% for a in albumes %}
+        "{{ a.idalbum }}": {
+            "cover": "{{ a.urlportada|default:''|escapejs }}",
+            "artist": "{{ a.artista.nombreartistico|default:'N/A'|escapejs }}"
+        }{% if not forloop.last %},{% endif %}
+        {% endfor %}
+    };
+
+    // 2. Función que se ejecuta al cambiar el select
+    function updateAlbumData(albumId) {
+        const data = albumsData[albumId];
+
+        if (data) {
+            // Actualizar URL en el input oculto/editable
+            document.getElementById('f-urlportada').value = data.cover;
+
+            // Actualizar la imagen de la portada y el fondo
+            if (data.cover) {
+                document.getElementById('cover-img').src = data.cover;
+                document.getElementById('fixed-bg').style.backgroundImage = `url('${data.cover}')`;
+            }
+
+            // Actualizar el nombre del artista en el DOM
+            const artistDisplay = document.getElementById('v-artista');
+            if (artistDisplay) {
+                artistDisplay.textContent = data.artist;
+            }
+        }
+    }
     function toggleEdit() {
         editMode = !editMode;
 
@@ -372,6 +410,10 @@
                 document.getElementById('v-estadopublicacion').textContent= document.getElementById('f-estadopublicacion').value;
                 document.getElementById('v-genero').textContent           = document.getElementById('f-genero').options[document.getElementById('f-genero').selectedIndex].text;
                 document.getElementById('page-title').textContent         = document.getElementById('f-titulocancion').value;
+                if (data.urlportada) {
+                    document.getElementById('cover-img').src = data.urlportada;
+                    document.getElementById('fixed-bg').style.backgroundImage = `url('${data.urlportada}')`;
+                }
                 setTimeout(() => toggleEdit(), 400); // Vuelve a modo lectura
             } else {
                 showToast(data.message || 'Error al guardar.', false);

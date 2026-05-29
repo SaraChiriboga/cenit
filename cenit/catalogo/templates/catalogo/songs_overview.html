@@ -83,6 +83,10 @@
                                 <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-bold uppercase bg-secondary/10 text-secondary border border-secondary/20">
                                     <span class="w-1.5 h-1.5 rounded-full bg-secondary"></span> Publicada
                                 </span>
+                            {% elif cancion.estadopublicacion == 'Programada' %}
+                                <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-bold uppercase bg-red-500/10 text-red-400 border border-red-500/20">
+                                    <span class="w-1.5 h-1.5 rounded-full bg-red-400"></span> Programada
+                                </span>
                             {% else %}
                                 <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-bold uppercase bg-yellow-500/10 text-yellow-500 border border-yellow-500/20">
                                     <span class="w-1.5 h-1.5 rounded-full bg-yellow-500"></span> {{ cancion.estadopublicacion|default:"Borrador" }}

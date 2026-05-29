@@ -137,19 +137,47 @@ def read_track(request, pk):
 
 @login_required
 def edit_track(request, pk):
+    # Validamos que la canción exista
     cancion = get_object_or_404(Cancion, idcancion=pk)
+
     if request.method == 'POST':
-        cancion.titulocancion = request.POST.get('titulocancion')
-        cancion.duracionseg = request.POST.get('duracionseg')
-        cancion.esexplicita = request.POST.get('esexplicita') == 'True'
+        # 1. Capturamos la URL exacta que el frontend determinó al cambiar el select
+        url_portada_frontend = request.POST.get('urlportada')
 
-        # Captura los IDs de los select
-        cancion.album_id = request.POST.get('album')
-        cancion.genero_id = request.POST.get('genero')
+        # 2. Hacemos un ÚNICO update respetando la integridad
+        with connection.cursor() as cursor:
+            cursor.execute("""
+                UPDATE [Catalogo].[Cancion]
+                SET tituloCancion=%s, 
+                    duracionSeg=%s, 
+                    esExplicita=%s,
+                    estadoPublicacion=%s, 
+                    Album_idAlbum=%s, 
+                    Genero_idGenero=%s,
+                    urlPortada=%s
+                WHERE idCancion=%s
+            """, [
+                request.POST.get('titulocancion'),
+                request.POST.get('duracionseg'),
+                1 if request.POST.get('esexplicita') == 'on' else 0,
+                request.POST.get('estadopublicacion'),
+                request.POST.get('album'),
+                request.POST.get('genero'),
+                url_portada_frontend,  # <-- Guardamos la portada correcta
+                pk
+            ])
+            # Nota: Django suele hacer autocommit en sus cursores,
+            # pero si ves que no se guarda en SQL Server, descomenta la siguiente línea:
+            # connection.commit()
 
-        cancion.save()
-        return JsonResponse({'status': 'success'})
-    return JsonResponse({'status': 'error'}, status=405)
+        # 3. Devolvemos el éxito y la URL para que el frontend actualice la vista sin recargar
+        return JsonResponse({
+            'status': 'success',
+            'urlportada': url_portada_frontend
+        })
+
+    return JsonResponse({'status': 'error', 'message': 'Método no permitido'}, status=405)
+
 # ══════════════════════════════════════════
 #  ARTISTAS
 # ══════════════════════════════════════════
@@ -299,42 +327,3 @@ def colaboracion_delete(request, pk):
         messages.success(request, "Colaboración eliminada.")
         return redirect('colaboracion_list')
     return render(request, 'catalogo/confirm_delete.html', {'objeto': colaboracion, 'tipo': 'colaboración'})
-
-@login_required
-def edit_track(request, pk):
-    cancion = get_object_or_404(Cancion, idcancion=pk)
-    mode = request.GET.get('mode', 'view') # Default a view
-
-    if request.method == 'POST':
-        # Actualización de datos
-        cancion.titulocancion = request.POST.get('titulocancion')
-        cancion.duracionseg = request.POST.get('duracionseg')
-        cancion.esexplicita = request.POST.get('esexplicita') == 'on'
-        cancion.save()
-        messages.success(request, "Track updated successfully.")
-        return redirect('songs_overview')
-
-    return render(request, 'catalogo/add_track.html', {
-        'cancion': cancion,
-        'mode': mode,
-        'albumes': Album.objects.all(),
-        'generos': Genero.objects.all(),
-    })
-
-@login_required
-@csrf_exempt
-def delete_track(request, pk):
-    if request.method == 'POST':
-        cancion = get_object_or_404(Cancion, idcancion=pk)
-        cancion.delete()
-        return JsonResponse({'status': 'success', 'message': 'Track deleted successfully.'})
-    return JsonResponse({'status': 'error', 'message': 'Invalid method.'}, status=405)
-
-
-@login_required
-def read_track(request, pk):
-    cancion = get_object_or_404(Cancion.objects.select_related('album__artista'), idcancion=pk)
-
-    return render(request, 'catalogo/read_track.html', {
-        'cancion': cancion
-    })
