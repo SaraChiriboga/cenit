@@ -1,0 +1,53 @@
+{% extends "base.html" %}
+
+{% block title %}Reporte: Suscripciones en Riesgo{% endblock %}
+
+{% block content %}
+<div class="w-full p-8">
+    <div class="max-w-6xl mx-auto">
+        <!-- HEADER -->
+        <div class="mb-8">
+            <h1 class="text-3xl font-extrabold text-white">Usuarios Premium en Riesgo</h1>
+            <p class="text-white/60">Clientes con suscripción activa sin actividad reciente (30+ días).</p>
+        </div>
+
+        <!-- PANEL DE DATOS -->
+        <div class="glass-ultra p-6 rounded-3xl border border-white/10">
+            <table class="w-full text-left border-collapse">
+                <thead class="text-white/40 font-bold text-xs uppercase tracking-wider">
+                    <tr>
+                        <th class="px-6 py-4">Usuario ID</th>
+                        <th class="px-6 py-4">Nombre Completo</th>
+                        <th class="px-6 py-4">Email</th>
+                        <th class="px-6 py-4">Días Inactivo</th>
+                        <th class="px-6 py-4 text-right">Acción</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-white/10">
+                    {% for usuario in usuarios %}
+                    <tr class="hover:bg-white/5 transition-colors group">
+                        <td class="px-6 py-4 font-mono text-white/70">USR-{{ usuario.idUsuario }}</td>
+                        <td class="px-6 py-4 font-semibold text-white">{{ usuario.nombre }} {{ usuario.apellido }}</td>
+                        <td class="px-6 py-4 text-white/60">{{ usuario.email }}</td>
+                        <td class="px-6 py-4">
+                            <span class="text-red-400 font-bold bg-red-500/10 px-2 py-1 rounded">
+                                {{ usuario.dias_inactivo }} días
+                            </span>
+                        </td>
+                        <td class="px-6 py-4 text-right">
+                            <a href="mailto:{{ usuario.email }}" class="text-primary hover:text-white transition-colors">Contactar</a>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="5" class="px-6 py-12 text-center text-white/40">
+                            No hay usuarios en riesgo actualmente.
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}
