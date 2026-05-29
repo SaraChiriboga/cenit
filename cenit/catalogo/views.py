@@ -429,6 +429,7 @@ def read_album(request, pk):
     artistas = Artista.objects.all()
     return render(request, 'catalogo/albumes/read_album.html', {'album': album, 'artistas': artistas})
 
+
 @login_required
 def edit_album(request, pk):
     album = get_object_or_404(Album, idalbum=pk)
@@ -437,23 +438,29 @@ def edit_album(request, pk):
         try:
             url_portada = request.POST.get('urlportada')
             with connection.cursor() as cursor:
+                # Quitamos Artista_idArtista del UPDATE
                 cursor.execute("""
                     UPDATE [Catalogo].[Album]
                     SET tituloAlbum=%s, 
                         fechaLanzamiento=%s, 
-                        urlPortada=%s,
-                        Artista_idArtista=%s
+                        urlPortada=%s
                     WHERE idAlbum=%s
                 """, [
                     request.POST.get('tituloalbum'),
                     request.POST.get('fechalanzamiento'),
                     url_portada,
-                    request.POST.get('artista'),
                     pk
                 ])
             return JsonResponse({'status': 'success', 'urlportada': url_portada})
         except Exception as e:
             return JsonResponse({'status': 'error', 'message': str(e)}, status=400)
+
+    # Para el GET, seguimos enviando los artistas por si necesitas mostrar el nombre
+    artistas = Artista.objects.all()
+    context = {'album': album, 'artistas': artistas}
+
+    # Esta vista se renderiza en edit_album.html o se maneja por AJAX en read_album.html
+    return render(request, 'catalogo/albumes/edit_album.html', context)
 
     artistas = Artista.objects.all()
     context = {'album': album, 'artistas': artistas}
