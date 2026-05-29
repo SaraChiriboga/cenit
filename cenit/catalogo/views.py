@@ -9,7 +9,7 @@ from django.views.decorators.csrf import csrf_exempt
 from .models import Cancion, Artista, Album, Genero, Colaboracion
 from .spotify_service import SpotifyClient
 
-
+ESTADOS_PUBLICACION = ['Borrador', 'Programada', 'Publicada']
 # ══════════════════════════════════════════
 #  CANCIONES
 # ══════════════════════════════════════════
@@ -114,6 +114,42 @@ def check_existence(request):
 
     return JsonResponse({'existe': existe})
 
+def delete_track(request, pk):
+    if request.method == 'POST':
+        cancion = get_object_or_404(Cancion, pk=pk)
+        cancion.delete()
+        return JsonResponse({'status': 'success'})
+    return JsonResponse({'status': 'error'}, status=400)
+
+@login_required
+def read_track(request, pk):
+    cancion = get_object_or_404(
+        Cancion.objects.select_related('album__artista', 'genero'),
+        idcancion=pk
+    )
+    return render(request, 'catalogo/read_track.html', {
+        'cancion': cancion,
+        'albumes': Album.objects.all(),
+        'generos': Genero.objects.all(),
+        'estados': ['Borrador', 'Programada', 'Publicada'],
+    })
+
+
+@login_required
+def edit_track(request, pk):
+    cancion = get_object_or_404(Cancion, idcancion=pk)
+    if request.method == 'POST':
+        cancion.titulocancion = request.POST.get('titulocancion')
+        cancion.duracionseg = request.POST.get('duracionseg')
+        cancion.esexplicita = request.POST.get('esexplicita') == 'True'
+
+        # Captura los IDs de los select
+        cancion.album_id = request.POST.get('album')
+        cancion.genero_id = request.POST.get('genero')
+
+        cancion.save()
+        return JsonResponse({'status': 'success'})
+    return JsonResponse({'status': 'error'}, status=405)
 # ══════════════════════════════════════════
 #  ARTISTAS
 # ══════════════════════════════════════════

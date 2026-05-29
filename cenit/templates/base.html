@@ -22,13 +22,16 @@
         .submenu {
             overflow: hidden;
             max-height: 0;
-            transition: max-height 0.3s ease-out, opacity 0.2s ease;
-            opacity: 0;
+            transition: none; /* Quitamos transición para el estado inicial */
         }
+
+        .submenu.ready {
+            transition: max-height 0.3s ease-out;
+        }
+
         .submenu.open {
             max-height: 400px;
             opacity: 1;
-            transition: max-height 0.35s ease-in, opacity 0.25s ease;
         }
         .submenu-arrow {
             transition: transform 0.3s ease;
@@ -97,28 +100,22 @@
 
             <!-- ── CATALOG (con submenú desplegable) ── -->
             <div>
-                {# Botón principal del acordeón: estilo activo si estamos en catálogo #}
                 <button id="catalog-toggle"
-                        class="w-full flex items-center gap-3 px-3 py-3 rounded-lg transition-all duration-200 group
-                               {% if url_name in catalog_urls %}
-                               text-primary bg-primary/5
-                               {% else %}
-                               text-on-surface-variant hover:text-on-surface hover:bg-white/5
-                               {% endif %}">
-                    <span class="material-symbols-outlined text-[20px]">subscriptions</span>
-                    <span class="font-body-md text-body-md flex-1 text-left">Catalog</span>
-                    <span class="material-symbols-outlined text-[16px] submenu-arrow text-on-surface-variant
-                          {% if url_name in catalog_urls %}rotated{% endif %}"
-                          id="catalog-arrow">chevron_right</span>
-                </button>
+                    class="w-full flex items-center gap-3 px-3 py-3 rounded-lg transition-all duration-0
+                           {% if url_name in catalog_urls %}text-primary bg-primary/5{% else %}text-on-surface-variant hover:text-on-surface hover:bg-white/5{% endif %}">
+                <span class="material-symbols-outlined text-[20px]">subscriptions</span>
+                <span class="font-body-md text-body-md flex-1 text-left">Catalog</span>
+                <span class="material-symbols-outlined text-[16px] submenu-arrow transition-transform duration-200
+                      {% if url_name in catalog_urls %}rotated{% endif %}" id="catalog-arrow">chevron_right</span>
+            </button>
 
-                {# Submenú: añadimos clase 'open' condicionalmente #}
-                <div class="submenu {% if url_name in catalog_urls %}open{% endif %}" id="catalog-submenu">
+            <div class="submenu {% if url_name in catalog_urls %}open{% endif %}" id="catalog-submenu">
+                </div>
                     <div class="ml-4 pl-3 border-l border-white/10 mt-1 flex flex-col gap-0.5 pb-2">
 
                         <a href="{% url 'songs_overview' %}"
                            class="submenu-item px-3 py-2 rounded-r-lg text-sm transition-all
-                           {% if 'songs_overview' in request.resolver_match.url_name or 'add_track' in request.resolver_match.url_name or 'edit_track' in request.resolver_match.url_name or 'read_track' in request.resolver_match.url_name or 'delete_track' in request.resolver_match.url_name%}
+                           {% if 'songs_overview' in request.resolver_match.url_name or 'add_track' in request.resolver_match.url_name or 'edit_track' in request.resolver_match.url_name or 'read_track' in request.resolver_match.url_name%}
                                active
                            {% else %}
                                text-on-surface-variant hover:text-on-surface hover:bg-white/5
@@ -235,17 +232,27 @@
 
     <script>
         document.addEventListener("DOMContentLoaded", function() {
-            const toggle = document.getElementById('catalog-toggle');
-            const submenu = document.getElementById('catalog-submenu');
-            const arrow = document.getElementById('catalog-arrow');
+        const toggle = document.getElementById('catalog-toggle');
+        const submenu = document.getElementById('catalog-submenu');
+        const arrow = document.getElementById('catalog-arrow');
 
-            if (toggle && submenu && arrow) {
-                toggle.addEventListener('click', () => {
-                    submenu.classList.toggle('open');
-                    arrow.classList.toggle('rotated');
-                });
+        if (toggle && submenu && arrow) {
+            // 1. Al cargar, verificamos si estaba abierto en el almacenamiento local
+            if (localStorage.getItem('catalogOpen') === 'true') {
+                submenu.classList.add('open');
+                arrow.classList.add('rotated');
             }
-        });
+
+            toggle.addEventListener('click', () => {
+                submenu.classList.toggle('open');
+                arrow.classList.toggle('rotated');
+
+                // 2. Guardamos el estado actual
+                const isOpen = submenu.classList.contains('open');
+                localStorage.setItem('catalogOpen', isOpen);
+            });
+        }
+    });
 
         // ── ⌘K shortcut ──
         window.addEventListener('keydown', (e) => {
