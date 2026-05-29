@@ -140,11 +140,10 @@ def edit_track(request, pk):
     # Validamos que la canción exista
     cancion = get_object_or_404(Cancion, idcancion=pk)
 
+    # 1. Si es POST: Guardamos los cambios en la base de datos
     if request.method == 'POST':
-        # 1. Capturamos la URL exacta que el frontend determinó al cambiar el select
         url_portada_frontend = request.POST.get('urlportada')
 
-        # 2. Hacemos un ÚNICO update respetando la integridad
         with connection.cursor() as cursor:
             cursor.execute("""
                 UPDATE [Catalogo].[Cancion]
@@ -163,20 +162,25 @@ def edit_track(request, pk):
                 request.POST.get('estadopublicacion'),
                 request.POST.get('album'),
                 request.POST.get('genero'),
-                url_portada_frontend,  # <-- Guardamos la portada correcta
+                url_portada_frontend,
                 pk
             ])
-            # Nota: Django suele hacer autocommit en sus cursores,
-            # pero si ves que no se guarda en SQL Server, descomenta la siguiente línea:
-            # connection.commit()
 
-        # 3. Devolvemos el éxito y la URL para que el frontend actualice la vista sin recargar
         return JsonResponse({
             'status': 'success',
             'urlportada': url_portada_frontend
         })
 
-    return JsonResponse({'status': 'error', 'message': 'Método no permitido'}, status=405)
+    estados_publicacion = ['Borrador', 'Publicado', 'Programada']
+
+    context = {
+        'cancion': cancion,
+        'albumes': Album.objects.all(),
+        'generos': Genero.objects.all(),
+        'estados': estados_publicacion
+    }
+
+    return render(request, 'catalogo/edit_track.html', context)
 
 # ══════════════════════════════════════════
 #  ARTISTAS

@@ -262,6 +262,56 @@
                 if (searchInput) searchInput.focus();
             }
         });
+
+        async function navegarSinCortes(url) {
+                // 1. Efecto visual: difuminar un poco la pantalla actual para indicar que está cargando
+                document.body.style.transition = 'opacity 0.2s ease-in-out';
+                document.body.style.opacity = '0.6';
+
+                try {
+                    // 2. Traer el HTML de la nueva página por debajo de la mesa (AJAX)
+                    const response = await fetch(url);
+                    if (!response.ok) throw new Error('Error en la red');
+                    const html = await response.text();
+
+                    // 3. Parsear el texto a un documento HTML real
+                    const parser = new DOMParser();
+                    const newDoc = parser.parseFromString(html, 'text/html');
+
+                    // 4. Reemplazar todo el contenido visible
+                    document.body.innerHTML = newDoc.body.innerHTML;
+
+                    // 5. Actualizar la URL en la barra del navegador (para que funcione el botón de "Atrás")
+                    window.history.pushState({}, '', url);
+
+                    // 6. MAGIA OSCURA: Reactivar los scripts.
+                    // Al inyectar HTML con innerHTML, los <script> mueren. Aquí los clonamos y resucitamos.
+                    const scripts = document.body.querySelectorAll('script');
+                    scripts.forEach(oldScript => {
+                        const newScript = document.createElement('script');
+                        // Copiar atributos (como src, type, etc.)
+                        Array.from(oldScript.attributes).forEach(attr => newScript.setAttribute(attr.name, attr.value));
+                        // Copiar contenido interno
+                        newScript.appendChild(document.createTextNode(oldScript.innerHTML));
+                        // Reemplazar el viejo por el nuevo para forzar su ejecución
+                        oldScript.parentNode.replaceChild(newScript, oldScript);
+                    });
+
+                    // 7. Restaurar la opacidad y subir al inicio de la página
+                    window.scrollTo(0, 0);
+                    document.body.style.opacity = '1';
+
+                } catch (error) {
+                    console.error("Fallo la carga silenciosa, haciendo redirección normal:", error);
+                    // Fallback: Si algo sale mal, simplemente navegamos de la forma tradicional
+                    window.location.href = url;
+                }
+            }
+
+            // Opcional: Escuchar el botón de "Atrás" del navegador para recargar la página correctamente
+            window.addEventListener('popstate', () => {
+                window.location.reload();
+            });
     </script>
 
     {% endwith %}

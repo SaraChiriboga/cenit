@@ -96,16 +96,18 @@
 
                         <td class="px-6 py-4">
                             <div class="flex items-center justify-end gap-2">
-                                <a href="{% url 'read_track' cancion.idcancion %}"
+                                <a href="javascript:void(0);"
+                                   onclick="navegarSinCortes('{% url 'read_track' cancion.idcancion %}')"
                                    class="p-2 text-on-surface-variant hover:text-primary transition-colors"
                                    title="View details">
                                     <span class="material-symbols-outlined text-[20px]">visibility</span>
                                 </a>
 
-                                <a href="{% url 'edit_track' cancion.idcancion %}"
-                                   class="p-2 text-on-surface-variant hover:text-secondary transition-colors"
-                                   title="Edit">
-                                    <span class="material-symbols-outlined text-[20px]">edit</span>
+                                <a href="javascript:void(0);"
+                                   onclick="navegarSinCortes('{% url 'edit_track' cancion.idcancion %}')"
+                                   class="p-2 text-on-surface-variant hover:text-primary transition-colors"
+                                   title="Editar Canción">
+                                    <span class="material-symbols-outlined">edit</span>
                                 </a>
 
                                 <button onclick="deleteTrack('{{ cancion.idcancion }}')"
