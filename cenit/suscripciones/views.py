@@ -24,7 +24,7 @@ def plan_list(request):
         planes = planes.filter(
             Q(nombreplan__icontains=query) | Q(moneda__icontains=query)
         )
-    return render(request, 'Suscripciones/plan_list.html', {
+    return render(request, 'Suscripciones/playlist/templates/Suscripciones/plan_list.html', {
         'planes': planes,
         'query': query,
     })
@@ -44,12 +44,12 @@ def plan_add(request):
 
             if not all([idtipo, nombreplan, precio, moneda, duracion]):
                 messages.error(request, 'Todos los campos son obligatorios.')
-                return render(request, 'Suscripciones/plan_form.html',
+                return render(request, 'Suscripciones/plan/plan_form.html',
                               {'action': 'Nuevo', 'monedas': MONEDAS})
 
             if TipoSuscripcion.objects.filter(idtipo=idtipo).exists():
                 messages.error(request, f'Ya existe un plan con el ID {idtipo}.')
-                return render(request, 'Suscripciones/plan_form.html',
+                return render(request, 'Suscripciones/plan/plan_form.html',
                               {'action': 'Nuevo', 'monedas': MONEDAS})
 
             TipoSuscripcion.objects.create(
@@ -65,7 +65,7 @@ def plan_add(request):
         except Exception as e:
             messages.error(request, f'Error al crear el plan: {e}')
 
-    return render(request, 'Suscripciones/plan_form.html', {
+    return render(request, 'Suscripciones/plan/plan_form.html', {
         'action': 'Nuevo',
         'monedas': MONEDAS,
     })
@@ -88,7 +88,7 @@ def plan_edit(request, pk):
         except Exception as e:
             messages.error(request, f'Error al actualizar: {e}')
 
-    return render(request, 'Suscripciones/plan_form.html', {
+    return render(request, 'Suscripciones/plan/plan_form.html', {
         'action': 'Editar',
         'plan': plan,
         'monedas': MONEDAS,
@@ -123,7 +123,7 @@ def promocion_list(request):
             Q(descripcion__icontains=query) |
             Q(tiposuscripcion__nombreplan__icontains=query)
         )
-    return render(request, 'Suscripciones/promocion_list.html', {
+    return render(request, 'Suscripciones/promocion/promocion_list.html', {
         'promociones': promociones,
         'query': query,
     })
@@ -144,7 +144,7 @@ def promocion_add(request):
 
             if not all([idpromo, descripcion, porcentajedesc, fechainicio, idtipo]):
                 messages.error(request, 'Faltan campos obligatorios.')
-                return render(request, 'Suscripciones/promocion_form.html',
+                return render(request, 'Suscripciones/promocion/promocion_form.html',
                               {'action': 'Nueva', 'planes': planes})
 
             Promocion.objects.create(
@@ -162,7 +162,7 @@ def promocion_add(request):
         except Exception as e:
             messages.error(request, f'Error: {e}')
 
-    return render(request, 'Suscripciones/promocion_form.html', {
+    return render(request, 'Suscripciones/promocion/promocion_form.html', {
         'action': 'Nueva',
         'planes': planes,
     })
@@ -186,7 +186,7 @@ def promocion_edit(request, pk):
         except Exception as e:
             messages.error(request, f'Error: {e}')
 
-    return render(request, 'Suscripciones/promocion_form.html', {
+    return render(request, 'Suscripciones/promocion/promocion_form.html', {
         'action': 'Editar',
         'promocion': promocion,
         'planes': planes,
@@ -224,7 +224,7 @@ def suscripcion_list(request):
             Q(tiposuscripcion__nombreplan__icontains=query) |
             Q(usuario__nombre__icontains=query)
         )
-    return render(request, 'Suscripciones/suscripcion_list.html', {
+    return render(request, 'Suscripciones/suscripcion/suscripcion_list.html', {
         'suscripciones': suscripciones,
         'query': query,
     })
@@ -249,7 +249,7 @@ def suscripcion_add(request):
 
             if not all([idsuscripcion, fechainicio, fechafin, estado, idtipo]):
                 messages.error(request, 'Faltan campos obligatorios.')
-                return render(request, 'Suscripciones/suscripcion_form.html', {
+                return render(request, 'Suscripciones/suscripcion/suscripcion_form.html', {
                     'action': 'Nueva', 'planes': planes,
                     'promociones': promociones, 'usuarios': usuarios,
                 })
@@ -269,7 +269,7 @@ def suscripcion_add(request):
         except Exception as e:
             messages.error(request, f'Error: {e}')
 
-    return render(request, 'Suscripciones/suscripcion_form.html', {
+    return render(request, 'Suscripciones/suscripcion/suscripcion_form.html', {
         'action': 'Nueva',
         'planes': planes,
         'promociones': promociones,
@@ -297,7 +297,7 @@ def suscripcion_edit(request, pk):
         except Exception as e:
             messages.error(request, f'Error: {e}')
 
-    return render(request, 'Suscripciones/suscripcion_form.html', {
+    return render(request, 'Suscripciones/suscripcion/suscripcion_form.html', {
         'action': 'Editar',
         'suscripcion': suscripcion,
         'planes': planes,
@@ -334,7 +334,7 @@ def notificacion_list(request):
             Q(usuario__nombre__icontains=query) |
             Q(mensaje__icontains=query)
         )
-    return render(request, 'Suscripciones/notificacion_list.html', {
+    return render(request, 'Suscripciones/notificacion/notificacion_list.html', {
         'notificaciones': notificaciones,
         'query': query,
     })
@@ -357,7 +357,7 @@ def notificacion_add(request):
 
             if not all([idnotificacion, tiponotif, mensaje, idusuario, idpromo]):
                 messages.error(request, 'Todos los campos son obligatorios.')
-                return render(request, 'Suscripciones/notificacion_form.html', {
+                return render(request, 'Suscripciones/notificacion/notificacion_form.html', {
                     'action': 'Nueva', 'usuarios': usuarios,
                     'promociones': promociones, 'tipos': TIPOS,
                 })
@@ -375,7 +375,7 @@ def notificacion_add(request):
         except Exception as e:
             messages.error(request, f'Error: {e}')
 
-    return render(request, 'Suscripciones/notificacion_form.html', {
+    return render(request, 'Suscripciones/notificacion/notificacion_form.html', {
         'action': 'Nueva',
         'usuarios': usuarios,
         'promociones': promociones,
@@ -410,7 +410,7 @@ def playlist_list(request):
             Q(nombre__icontains=query) |
             Q(usuario__nombre__icontains=query)
         )
-    return render(request, 'Suscripciones/playlist_list.html', {
+    return render(request, 'Suscripciones/playlist/playlist_list.html', {
         'playlists': playlists,
         'query': query,
     })
@@ -433,7 +433,7 @@ def playlist_add(request):
 
             if not all([idplaylist, nombre]):
                 messages.error(request, 'El ID y el nombre son obligatorios.')
-                return render(request, 'Suscripciones/playlist_form.html',
+                return render(request, 'Suscripciones/playlist/playlist_form.html',
                               {'action': 'Nueva', 'usuarios': usuarios})
 
             Playlist.objects.create(
@@ -451,7 +451,7 @@ def playlist_add(request):
         except Exception as e:
             messages.error(request, f'Error: {e}')
 
-    return render(request, 'Suscripciones/playlist_form.html', {
+    return render(request, 'Suscripciones/playlist/playlist_form.html', {
         'action': 'Nueva',
         'usuarios': usuarios,
     })
@@ -477,7 +477,7 @@ def playlist_edit(request, pk):
         except Exception as e:
             messages.error(request, f'Error: {e}')
 
-    return render(request, 'Suscripciones/playlist_form.html', {
+    return render(request, 'Suscripciones/playlist/playlist_form.html', {
         'action': 'Editar',
         'playlist': playlist,
         'usuarios': usuarios,
@@ -509,7 +509,7 @@ def playlist_canciones(request, pk):
     entradas  = PlaylistCancion.objects.select_related('cancion').filter(
         playlist=playlist
     ).order_by('orden')
-    return render(request, 'Suscripciones/playlist_canciones.html', {
+    return render(request, 'Suscripciones/playlist/playlist_canciones.html', {
         'playlist': playlist,
         'entradas': entradas,
     })
@@ -528,7 +528,7 @@ def playlist_cancion_agregar(request, pk):
 
             if PlaylistCancion.objects.filter(playlist=playlist, cancion_id=cancion_id).exists():
                 messages.error(request, 'Esa canción ya está en la playlist.')
-                return render(request, 'Suscripciones/playlist_cancion_form.html', {
+                return render(request, 'Suscripciones/playlist/playlist_cancion_form.html', {
                     'playlist': playlist, 'canciones': canciones,
                 })
 
@@ -543,7 +543,7 @@ def playlist_cancion_agregar(request, pk):
         except Exception as e:
             messages.error(request, f'Error: {e}')
 
-    return render(request, 'Suscripciones/playlist_cancion_form.html', {
+    return render(request, 'Suscripciones/playlist/playlist_cancion_form.html', {
         'playlist': playlist,
         'canciones': canciones,
     })
@@ -581,7 +581,7 @@ def estadistica_list(request):
             Q(cancion__titulocancion__icontains=query) |
             Q(fechareporte__icontains=query)
         )
-    return render(request, 'Suscripciones/estadistica_list.html', {
+    return render(request, 'Suscripciones/estadistica/estadistica_list.html', {
         'estadisticas': estadisticas,
         'query': query,
     })
@@ -601,7 +601,7 @@ def estadistica_add(request):
 
             if not all([idestat, totalrepros, fechareporte, cancion_id]):
                 messages.error(request, 'Todos los campos son obligatorios.')
-                return render(request, 'Suscripciones/estadistica_form.html',
+                return render(request, 'Suscripciones/estadistica/estadistica_form.html',
                               {'action': 'Nueva', 'canciones': canciones})
 
             EstadisticaDiaria.objects.create(
@@ -616,7 +616,7 @@ def estadistica_add(request):
         except Exception as e:
             messages.error(request, f'Error: {e}')
 
-    return render(request, 'Suscripciones/estadistica_form.html', {
+    return render(request, 'Suscripciones/estadistica/estadistica_form.html', {
         'action': 'Nueva',
         'canciones': canciones,
     })
@@ -653,7 +653,7 @@ def reporte_vencimientos(request):
         fechafin__lte=limite,
     ).order_by('fechafin')
 
-    return render(request, 'Suscripciones/reporte_vencimientos.html', {
+    return render(request, 'Suscripciones/reportes/reporte_vencimientos.html', {
         'proximas': proximas,
         'hoy': hoy,
         'limite': limite,
@@ -669,7 +669,7 @@ def reporte_promociones_vencidas(request):
         fechaexpira__lt=ahora,
     ).order_by('fechaexpira')
 
-    return render(request, 'Suscripciones/reporte_promociones_vencidas.html', {
+    return render(request, 'Suscripciones/reportes/reporte_promociones_vencidas.html', {
         'vencidas': vencidas,
         'ahora': ahora,
     })
