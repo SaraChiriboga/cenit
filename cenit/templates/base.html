@@ -161,10 +161,82 @@
                 <span class="material-symbols-outlined text-[20px]">group</span>
                 <span class="font-body-md text-body-md">Users & Access</span>
             </a>
-            <a class="flex items-center gap-3 text-on-surface-variant hover:text-on-surface px-3 py-3 rounded-lg transition-all duration-200 hover:bg-white/5" href="#">
-                <span class="material-symbols-outlined text-[20px]">payments</span>
-                <span class="font-body-md text-body-md">Subscriptions</span>
-            </a>
+            <!-- ── SUBSCRIPTIONS (con submenú desplegable) ── -->
+            <div>
+                <button id="subscriptions-toggle"
+                    class="w-full flex items-center gap-3 px-3 py-3 rounded-lg transition-all duration-0
+                           {% if 'suscripciones' in request.resolver_match.app_name %}text-primary bg-primary/5{% else %}text-on-surface-variant hover:text-on-surface hover:bg-white/5{% endif %}">
+                    <span class="material-symbols-outlined text-[20px]">payments</span>
+                    <span class="font-body-md text-body-md flex-1 text-left">Subscriptions</span>
+                    <span class="material-symbols-outlined text-[16px] submenu-arrow transition-transform duration-200
+                          {% if 'suscripciones' in request.resolver_match.app_name %}rotated{% endif %}" id="subscriptions-arrow">chevron_right</span>
+                </button>
+
+                <div class="submenu {% if 'suscripciones' in request.resolver_match.app_name %}open{% endif %}" id="subscriptions-submenu">
+                    <div class="ml-4 pl-3 border-l border-white/10 mt-1 flex flex-col gap-0.5 pb-2">
+
+                        <a href="{% url 'plan_list' %}"
+                           class="submenu-item flex items-center gap-3 px-3 py-2 rounded-r-lg text-sm transition-all duration-150
+                                  {% if request.resolver_match.url_name == 'plan_list' or request.resolver_match.url_name == 'plan_add' or request.resolver_match.url_name == 'plan_edit' %}active{% else %}text-on-surface-variant hover:text-on-surface hover:bg-white/5{% endif %}">
+                            <span class="material-symbols-outlined text-[16px]">card_membership</span>
+                            Planes
+                        </a>
+
+                        <a href="{% url 'promocion_list' %}"
+                           class="submenu-item flex items-center gap-3 px-3 py-2 rounded-r-lg text-sm transition-all duration-150
+                                  {% if request.resolver_match.url_name == 'promocion_list' or request.resolver_match.url_name == 'promocion_add' or request.resolver_match.url_name == 'promocion_edit' %}active{% else %}text-on-surface-variant hover:text-on-surface hover:bg-white/5{% endif %}">
+                            <span class="material-symbols-outlined text-[16px]">local_offer</span>
+                            Promociones
+                        </a>
+
+                        <a href="{% url 'suscripcion_list' %}"
+                           class="submenu-item flex items-center gap-3 px-3 py-2 rounded-r-lg text-sm transition-all duration-150
+                                  {% if request.resolver_match.url_name == 'suscripcion_list' or request.resolver_match.url_name == 'suscripcion_add' or request.resolver_match.url_name == 'suscripcion_edit' %}active{% else %}text-on-surface-variant hover:text-on-surface hover:bg-white/5{% endif %}">
+                            <span class="material-symbols-outlined text-[16px]">subscriptions</span>
+                            Suscripciones
+                        </a>
+
+                        <a href="{% url 'notificacion_list' %}"
+                           class="submenu-item flex items-center gap-3 px-3 py-2 rounded-r-lg text-sm transition-all duration-150
+                                  {% if request.resolver_match.url_name == 'notificacion_list' or request.resolver_match.url_name == 'notificacion_add' %}active{% else %}text-on-surface-variant hover:text-on-surface hover:bg-white/5{% endif %}">
+                            <span class="material-symbols-outlined text-[16px]">notifications</span>
+                            Notificaciones
+                        </a>
+
+                        <a href="{% url 'playlist_list' %}"
+                           class="submenu-item flex items-center gap-3 px-3 py-2 rounded-r-lg text-sm transition-all duration-150
+                                  {% if request.resolver_match.url_name == 'playlist_list' or request.resolver_match.url_name == 'playlist_add' or request.resolver_match.url_name == 'playlist_edit' or request.resolver_match.url_name == 'playlist_canciones' %}active{% else %}text-on-surface-variant hover:text-on-surface hover:bg-white/5{% endif %}">
+                            <span class="material-symbols-outlined text-[16px]">playlist_play</span>
+                            Playlists
+                        </a>
+
+                        <a href="{% url 'estadistica_list' %}"
+                           class="submenu-item flex items-center gap-3 px-3 py-2 rounded-r-lg text-sm transition-all duration-150
+                                  {% if request.resolver_match.url_name == 'estadistica_list' or request.resolver_match.url_name == 'estadistica_add' %}active{% else %}text-on-surface-variant hover:text-on-surface hover:bg-white/5{% endif %}">
+                            <span class="material-symbols-outlined text-[16px]">bar_chart</span>
+                            Estadísticas
+                        </a>
+
+                        <div class="h-px bg-white/10 my-2"></div>
+
+                        <span class="text-xs text-on-surface-variant/60 px-3 py-1">Reportes</span>
+
+                        <a href="{% url 'reporte_vencimientos' %}"
+                           class="submenu-item flex items-center gap-3 px-3 py-2 rounded-r-lg text-sm transition-all duration-150
+                                  {% if request.resolver_match.url_name == 'reporte_vencimientos' %}active{% else %}text-on-surface-variant hover:text-on-surface hover:bg-white/5{% endif %}">
+                            <span class="material-symbols-outlined text-[16px]">schedule</span>
+                            Vencimientos (5 días)
+                        </a>
+
+                        <a href="{% url 'reporte_promociones_vencidas' %}"
+                           class="submenu-item flex items-center gap-3 px-3 py-2 rounded-r-lg text-sm transition-all duration-150
+                                  {% if request.resolver_match.url_name == 'reporte_promociones_vencidas' %}active{% else %}text-on-surface-variant hover:text-on-surface hover:bg-white/5{% endif %}">
+                            <span class="material-symbols-outlined text-[16px] text-error">warning</span>
+                            Promociones vencidas
+                        </a>
+                    </div>
+                </div>
+            </div>
             <a class="flex items-center gap-3 text-on-surface-variant hover:text-on-surface px-3 py-3 rounded-lg transition-all duration-200 hover:bg-white/5" href="#">
                 <span class="material-symbols-outlined text-[20px]">leaderboard</span>
                 <span class="font-body-md text-body-md">Analytics</span>
@@ -232,27 +304,42 @@
 
     <script>
         document.addEventListener("DOMContentLoaded", function() {
-        const toggle = document.getElementById('catalog-toggle');
-        const submenu = document.getElementById('catalog-submenu');
-        const arrow = document.getElementById('catalog-arrow');
+            // ── SUBMENÚ CATÁLOGO ──
+            const toggle = document.getElementById('catalog-toggle');
+            const submenu = document.getElementById('catalog-submenu');
+            const arrow = document.getElementById('catalog-arrow');
 
-        if (toggle && submenu && arrow) {
-            // 1. Al cargar, verificamos si estaba abierto en el almacenamiento local
-            if (localStorage.getItem('catalogOpen') === 'true') {
-                submenu.classList.add('open');
-                arrow.classList.add('rotated');
+            if (toggle && submenu && arrow) {
+                if (localStorage.getItem('catalogOpen') === 'true') {
+                    submenu.classList.add('open');
+                    arrow.classList.add('rotated');
+                }
+
+                toggle.addEventListener('click', () => {
+                    submenu.classList.toggle('open');
+                    arrow.classList.toggle('rotated');
+                    localStorage.setItem('catalogOpen', submenu.classList.contains('open'));
+                });
             }
 
-            toggle.addEventListener('click', () => {
-                submenu.classList.toggle('open');
-                arrow.classList.toggle('rotated');
+            // ── SUBMENÚ SUSCRIPCIONES (NUEVO) ──
+            const subsToggle = document.getElementById('subscriptions-toggle');
+            const subsSubmenu = document.getElementById('subscriptions-submenu');
+            const subsArrow = document.getElementById('subscriptions-arrow');
 
-                // 2. Guardamos el estado actual
-                const isOpen = submenu.classList.contains('open');
-                localStorage.setItem('catalogOpen', isOpen);
-            });
-        }
-    });
+            if (subsToggle && subsSubmenu && subsArrow) {
+                if (localStorage.getItem('subscriptionsOpen') === 'true') {
+                    subsSubmenu.classList.add('open');
+                    subsArrow.classList.add('rotated');
+                }
+
+                subsToggle.addEventListener('click', () => {
+                    subsSubmenu.classList.toggle('open');
+                    subsArrow.classList.toggle('rotated');
+                    localStorage.setItem('subscriptionsOpen', subsSubmenu.classList.contains('open'));
+                });
+            }
+        });
 
         // ── ⌘K shortcut ──
         window.addEventListener('keydown', (e) => {
@@ -264,56 +351,40 @@
         });
 
         async function navegarSinCortes(url) {
-                // 1. Efecto visual: difuminar un poco la pantalla actual para indicar que está cargando
-                document.body.style.transition = 'opacity 0.2s ease-in-out';
-                document.body.style.opacity = '0.6';
+            document.body.style.transition = 'opacity 0.2s ease-in-out';
+            document.body.style.opacity = '0.6';
 
-                try {
-                    // 2. Traer el HTML de la nueva página por debajo de la mesa (AJAX)
-                    const response = await fetch(url);
-                    if (!response.ok) throw new Error('Error en la red');
-                    const html = await response.text();
+            try {
+                const response = await fetch(url);
+                if (!response.ok) throw new Error('Error en la red');
+                const html = await response.text();
 
-                    // 3. Parsear el texto a un documento HTML real
-                    const parser = new DOMParser();
-                    const newDoc = parser.parseFromString(html, 'text/html');
+                const parser = new DOMParser();
+                const newDoc = parser.parseFromString(html, 'text/html');
 
-                    // 4. Reemplazar todo el contenido visible
-                    document.body.innerHTML = newDoc.body.innerHTML;
+                document.body.innerHTML = newDoc.body.innerHTML;
+                window.history.pushState({}, '', url);
 
-                    // 5. Actualizar la URL en la barra del navegador (para que funcione el botón de "Atrás")
-                    window.history.pushState({}, '', url);
+                const scripts = document.body.querySelectorAll('script');
+                scripts.forEach(oldScript => {
+                    const newScript = document.createElement('script');
+                    Array.from(oldScript.attributes).forEach(attr => newScript.setAttribute(attr.name, attr.value));
+                    newScript.appendChild(document.createTextNode(oldScript.innerHTML));
+                    oldScript.parentNode.replaceChild(newScript, oldScript);
+                });
 
-                    // 6. MAGIA OSCURA: Reactivar los scripts.
-                    // Al inyectar HTML con innerHTML, los <script> mueren. Aquí los clonamos y resucitamos.
-                    const scripts = document.body.querySelectorAll('script');
-                    scripts.forEach(oldScript => {
-                        const newScript = document.createElement('script');
-                        // Copiar atributos (como src, type, etc.)
-                        Array.from(oldScript.attributes).forEach(attr => newScript.setAttribute(attr.name, attr.value));
-                        // Copiar contenido interno
-                        newScript.appendChild(document.createTextNode(oldScript.innerHTML));
-                        // Reemplazar el viejo por el nuevo para forzar su ejecución
-                        oldScript.parentNode.replaceChild(newScript, oldScript);
-                    });
-
-                    // 7. Restaurar la opacidad y subir al inicio de la página
-                    window.scrollTo(0, 0);
-                    document.body.style.opacity = '1';
-
-                } catch (error) {
-                    console.error("Fallo la carga silenciosa, haciendo redirección normal:", error);
-                    // Fallback: Si algo sale mal, simplemente navegamos de la forma tradicional
-                    window.location.href = url;
-                }
+                window.scrollTo(0, 0);
+                document.body.style.opacity = '1';
+            } catch (error) {
+                console.error("Fallo la carga silenciosa, haciendo redirección normal:", error);
+                window.location.href = url;
             }
+        }
 
-            // Opcional: Escuchar el botón de "Atrás" del navegador para recargar la página correctamente
-            window.addEventListener('popstate', () => {
-                window.location.reload();
-            });
+        window.addEventListener('popstate', () => {
+            window.location.reload();
+        });
     </script>
-
     {% endwith %}
     {% endwith %}
 </body>

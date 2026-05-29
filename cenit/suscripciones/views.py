@@ -24,7 +24,7 @@ def plan_list(request):
         planes = planes.filter(
             Q(nombreplan__icontains=query) | Q(moneda__icontains=query)
         )
-    return render(request, 'Suscripciones/playlist/templates/Suscripciones/plan_list.html', {
+    return render(request, 'Suscripciones/plan/plan_list.html', {
         'planes': planes,
         'query': query,
     })
