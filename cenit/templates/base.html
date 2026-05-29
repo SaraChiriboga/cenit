@@ -22,7 +22,7 @@
         .submenu {
             overflow: hidden;
             max-height: 0;
-            transition: none; /* Quitamos transición para el estado inicial */
+            transition: none;
         }
 
         .submenu.ready {
@@ -82,14 +82,13 @@
 </head>
 <body class="text-on-surface">
 
-    {# ── LÓGICA DE SERVIDOR PARA DETERMINAR SI ESTAMOS EN EL CATÁLOGO ── #}
     {% with url_name=request.resolver_match.url_name|default:'' %}
     {% with catalog_urls="songs_overview artists_overview albums_overview genre_overview colabs_overview add_track" %}
 
-    <aside class="fixed left-0 top-0 h-full w-[280px] bg-surface-container/80 backdrop-blur-xl border-r border-white/10 flex flex-col py-8 z-50 overflow-y-auto">
+    <aside class="fixed left-0 top-0 h-full w-[280px] bg-surface-container/80 backdrop-blur-xl border-r border-white/10 flex flex-col py-5 z-50 overflow-y-auto">
 
-        <div class="px-8 mb-12">
-            <svg class="h-10 w-auto" width="200" height="60" viewBox="0 0 200 60" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <div class="w-full flex justify-center mb-5">
+            <svg class="h-14 w-auto" width="200" height="60" viewBox="0 0 200 60" fill="none" xmlns="http://www.w3.org/2000/svg">
               <path d="M10 30L25 10L40 30L25 50L10 30Z" stroke="#45F3FF" stroke-width="2" fill="none"/>
               <path d="M18 30L25 20L32 30L25 40L18 30Z" fill="#45F3FF"/>
               <text x="55" y="42" fill="white" font-family="Inter, sans-serif" font-weight="800" font-size="28" letter-spacing="2">CÉNIT</text>
@@ -98,19 +97,17 @@
 
         <nav class="flex-1 flex flex-col gap-1 px-3">
 
-            <!-- ── CATALOG (con submenú desplegable) ── -->
             <div>
                 <button id="catalog-toggle"
                     class="w-full flex items-center gap-3 px-3 py-3 rounded-lg transition-all duration-0
                            {% if url_name in catalog_urls %}text-primary bg-primary/5{% else %}text-on-surface-variant hover:text-on-surface hover:bg-white/5{% endif %}">
-                <span class="material-symbols-outlined text-[20px]">subscriptions</span>
-                <span class="font-body-md text-body-md flex-1 text-left">Catalog</span>
-                <span class="material-symbols-outlined text-[16px] submenu-arrow transition-transform duration-200
-                      {% if url_name in catalog_urls %}rotated{% endif %}" id="catalog-arrow">chevron_right</span>
-            </button>
+                    <span class="material-symbols-outlined text-[20px]">subscriptions</span>
+                    <span class="font-body-md text-body-md flex-1 text-left">Catalog</span>
+                    <span class="material-symbols-outlined text-[16px] submenu-arrow transition-transform duration-200
+                          {% if url_name in catalog_urls %}rotated{% endif %}" id="catalog-arrow">chevron_right</span>
+                </button>
 
-            <div class="submenu {% if url_name in catalog_urls %}open{% endif %}" id="catalog-submenu">
-                </div>
+                <div class="submenu {% if url_name in catalog_urls %}open{% endif %}" id="catalog-submenu">
                     <div class="ml-4 pl-3 border-l border-white/10 mt-1 flex flex-col gap-0.5 pb-2">
 
                         <a href="{% url 'songs_overview' %}"
@@ -156,12 +153,11 @@
                 </div>
             </div>
 
-            <!-- ── OTHER MODULES ── -->
             <a class="flex items-center gap-3 text-on-surface-variant hover:text-on-surface px-3 py-3 rounded-lg transition-all duration-200 hover:bg-white/5" href="#">
                 <span class="material-symbols-outlined text-[20px]">group</span>
                 <span class="font-body-md text-body-md">Users & Access</span>
             </a>
-            <!-- ── SUBSCRIPTIONS (con submenú desplegable) ── -->
+
             <div>
                 <button id="subscriptions-toggle"
                     class="w-full flex items-center gap-3 px-3 py-3 rounded-lg transition-all duration-0
@@ -270,7 +266,6 @@
         </div>
     </aside>
 
-    <!-- ── TOPBAR ── -->
     <header class="fixed top-0 right-0 w-[calc(100%-280px)] h-16 bg-background/80 backdrop-blur-lg border-b border-white/5 flex justify-between items-center px-10 z-40">
         <div class="flex items-center gap-2 text-on-surface-variant font-label-md text-label-md">
             {% block breadcrumb %}
@@ -322,7 +317,7 @@
                 });
             }
 
-            // ── SUBMENÚ SUSCRIPCIONES (NUEVO) ──
+            // ── SUBMENÚ SUSCRIPCIONES ──
             const subsToggle = document.getElementById('subscriptions-toggle');
             const subsSubmenu = document.getElementById('subscriptions-submenu');
             const subsArrow = document.getElementById('subscriptions-arrow');

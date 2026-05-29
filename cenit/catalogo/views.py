@@ -541,32 +541,128 @@ def search_album_spotify_ajax(request):
 # ══════════════════════════════════════════
 
 @login_required
-def genero_list(request):
-    generos = Genero.objects.all()
+def genre_overview(request):
     query = request.GET.get('q', '')
     if query:
-        generos = generos.filter(nombregenero__icontains=query)
-    return render(request, 'catalogo/generos/genre_overview.html', {'generos': generos, 'query': query})
+        generos = Genero.objects.filter(nombregenero__icontains=query)
+    else:
+        generos = Genero.objects.all()
 
-
-@login_required
-def genero_add(request):
-    return render(request, 'catalogo/generos/genero_form.html', {'action': 'Agregar', 'genero': None})
-
-
-@login_required
-def genero_edit(request, pk):
-    genero = get_object_or_404(Genero, idgenero=pk)
-    return render(request, 'catalogo/generos/genero_form.html', {'action': 'Editar', 'genero': genero})
-
+    context = {
+        'generos': generos,
+        'query': query
+    }
+    return render(request, 'catalogo/generos/genre_overview.html', context)
 
 @login_required
-def genero_delete(request, pk):
-    genero = get_object_or_404(Genero, idgenero=pk)
+def add_genre(request):
+    if request.method == 'GET':
+        nombre_sugerido = request.GET.get('nombre', '')
+        return render(request, 'catalogo/generos/add_genre.html', {'nombre_sugerido': nombre_sugerido})
+
     if request.method == 'POST':
-        messages.success(request, f"Género '{genero.nombregenero}' eliminado.")
-        return redirect('genero_list')
-    return render(request, 'catalogo/generos/confirm_delete.html', {'objeto': genero, 'tipo': 'género'})
+        try:
+            # Capturamos y limpiamos espacios extra al inicio o final
+            nombre = request.POST.get('nombregenero', '').strip()
+            descripcion = request.POST.get('descripcion', '').strip()
+
+            if not nombre:
+                return JsonResponse({'status': 'error', 'message': 'El nombre del género es obligatorio.'}, status=400)
+
+            with connection.cursor() as cursor:
+                # 1. VERIFICACIÓN DE DUPLICADOS (Case-insensitive)
+                cursor.execute("SELECT idGenero FROM [Catalogo].[Genero] WHERE LOWER(nombreGenero) = LOWER(%s)", [nombre])
+                if cursor.fetchone():
+                    # Si encuentra un resultado, frena todo y lanza el error al Toast
+                    return JsonResponse({'status': 'error', 'message': f'El género "{nombre}" ya está registrado en el catálogo.'}, status=400)
+
+                # 2. INSERCIÓN (Si pasó la prueba anterior)
+                cursor.execute("""
+                    INSERT INTO [Catalogo].[Genero] (nombreGenero, descripcion)
+                    VALUES (%s, %s)
+                """, [nombre, descripcion])
+
+            return JsonResponse({'status': 'success', 'message': 'Género registrado correctamente.'})
+
+        except Exception as e:
+            return JsonResponse({'status': 'error', 'message': str(e)}, status=400)
+
+    return JsonResponse({'status': 'error', 'message': 'Método no permitido'}, status=405)
+
+@login_required
+def read_genre(request, pk):
+    genero = get_object_or_404(Genero, idgenero=pk)
+    return render(request, 'catalogo/generos/read_genre.html', {'genero': genero})
+
+@login_required
+def edit_genre(request, pk):
+    genero = get_object_or_404(Genero, idgenero=pk)
+
+    if request.method == 'POST':
+        try:
+            with connection.cursor() as cursor:
+                cursor.execute("""
+                    UPDATE [Catalogo].[Genero]
+                    SET nombreGenero = %s,
+                        descripcion = %s
+                    WHERE idGenero = %s
+                """, [
+                    request.POST.get('nombregenero'),
+                    request.POST.get('descripcion'),
+                    pk
+                ])
+            return JsonResponse({'status': 'success', 'message': 'Género actualizado correctamente.'})
+        except Exception as e:
+            return JsonResponse({'status': 'error', 'message': str(e)}, status=400)
+
+    return render(request, 'catalogo/generos/edit_genre.html', {'genero': genero})
+
+
+@login_required
+def delete_genre(request, pk):
+    if request.method == 'POST':
+        try:
+            with transaction.atomic():
+                with connection.cursor() as cursor:
+                    # 1. Buscar si ya existe el género de respaldo
+                    cursor.execute(
+                        "SELECT idGenero FROM [Catalogo].[Genero] WHERE nombreGenero = 'Sin género asignado'")
+                    row = cursor.fetchone()
+
+                    if row:
+                        default_id = row[0]
+                    else:
+                        # Si no existe, lo creamos de forma automática en una fila nueva
+                        cursor.execute("""
+                            INSERT INTO [Catalogo].[Genero] (nombreGenero, descripcion)
+                            VALUES ('Sin género asignado', 'Categoría temporal para canciones cuyo género original fue eliminado.')
+                        """)
+                        # Capturamos el ID asignado por el IDENTITY de SQL Server
+                        cursor.execute("SELECT SCOPE_IDENTITY()")
+                        default_id = int(cursor.fetchone()[0])
+
+                    # 2. Protección integral: Evitar que se elimine el mismísimo registro de respaldo
+                    if int(pk) == default_id:
+                        return JsonResponse({
+                            'status': 'error',
+                            'message': 'Protección de sistema: No se puede eliminar el género de respaldo global.'
+                        }, status=400)
+
+                    # 3. Traspasar las canciones al género comodín (Evita el borrado de tracks)
+                    cursor.execute("""
+                        UPDATE [Catalogo].[Cancion]
+                        SET Genero_idGenero = %s
+                        WHERE Genero_idGenero = %s
+                    """, [default_id, pk])
+
+                    # 4. Una vez liberadas las amarras, eliminamos el género original de forma segura
+                    cursor.execute("DELETE FROM [Catalogo].[Genero] WHERE idGenero = %s", [pk])
+
+            return JsonResponse({'status': 'success'})
+        except Exception as e:
+            return JsonResponse({'status': 'error', 'message': f"Error al reasignar registros: {str(e)}"}, status=400)
+
+    return JsonResponse({'status': 'error', 'message': 'Método no permitido'}, status=405)
 
 
 # ══════════════════════════════════════════

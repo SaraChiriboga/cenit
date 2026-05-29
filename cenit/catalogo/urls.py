@@ -30,10 +30,11 @@ urlpatterns = [
     path('ajax/search-album/', views.search_album_spotify_ajax, name='search_album_spotify_ajax'),
 
     # ── Géneros ──
-    path('generos/', views.genero_list, name='genre_overview'),
-    path('generos/add/', views.genero_add, name='genero_add'),
-    path('generos/<int:pk>/edit/', views.genero_edit, name='genero_edit'),
-    path('generos/<int:pk>/delete/', views.genero_delete, name='genero_delete'),
+    path('generos/', views.genre_overview, name='genre_overview'),
+    path('generos/add/', views.add_genre, name='add_genre'),
+    path('generos/<int:pk>/', views.read_genre, name='read_genre'),
+    path('generos/<int:pk>/edit/', views.edit_genre, name='edit_genre'),
+    path('generos/<int:pk>/delete/', views.delete_genre, name='delete_genre'),
 
     # ── Colaboraciones ──
     path('colaboraciones/', views.colaboracion_list, name='colabs_overview'),
