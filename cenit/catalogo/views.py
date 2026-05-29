@@ -196,10 +196,20 @@ def artists_overview(request):
         )
     return render(request, 'catalogo/artistas/artists_overview.html', {'artistas': artistas, 'query': query})
 
+
 @login_required
 def read_artist(request, pk):
     artista = get_object_or_404(Artista, idartista=pk)
-    return render(request, 'catalogo/artistas/read_artist.html', {'artista': artista})
+
+    # Añadimos los estados exactos que permite tu SQL Server
+    estados_actividad = ['Vigente', 'Archivado']
+
+    context = {
+        'artista': artista,
+        'estados': estados_actividad
+    }
+
+    return render(request, 'catalogo/artistas/read_artist.html', context)
 
 @login_required
 def edit_artist(request, pk):
