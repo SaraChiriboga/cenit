@@ -238,7 +238,7 @@ def edit_artist(request, pk):
         return JsonResponse({'status': 'success'})
 
     # Variables para los <select> del formulario
-    estados_actividad = ['Vigente', 'Retirado', 'Fallecido']
+    estados_actividad = ['Vigente', 'Archivado']
 
     context = {
         'artista': artista,
