@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 
-{% block title %}Géneros{% endblock %}
+{% block title %}Géneros Musicales{% endblock %}
 
 {% block breadcrumb %}
 <a href="/static" class="hover:text-primary transition-colors">Dashboard</a>
@@ -21,7 +21,7 @@
                     <div class="absolute inset-y-0 left-3 flex items-center pointer-events-none">
                         <span class="material-symbols-outlined text-on-surface-variant text-[18px]">search</span>
                     </div>
-                    <input name="q" value="{{ query }}" class="w-full bg-surface-container border border-outline-variant/20 rounded-md pl-10 pr-4 py-2 text-on-surface focus:ring-2 focus:ring-secondary/50 focus:border-secondary outline-none transition-all placeholder:text-on-surface-variant/50" placeholder="Buscar géneros..." type="text"/>
+                    <input name="q" value="{{ query }}" class="w-full bg-surface-container border border-outline-variant/20 rounded-md pl-10 pr-4 py-2 text-on-surface focus:ring-2 focus:ring-secondary/50 focus:border-secondary outline-none transition-all font-body-md text-body-md placeholder:text-on-surface-variant/50" placeholder="Buscar géneros..." type="text"/>
                 </form>
             </div>
             <div class="flex gap-2 shrink-0">
@@ -36,7 +36,7 @@
                 <thead class="bg-surface-container-lowest text-on-surface-variant font-label-sm text-label-sm uppercase tracking-wider">
                     <tr>
                         <th class="px-6 py-4 font-semibold">ID</th>
-                        <th class="px-6 py-4 font-semibold">Género</th>
+                        <th class="px-6 py-4 font-semibold">Categoría</th>
                         <th class="px-6 py-4 font-semibold">Descripción</th>
                         <th class="px-6 py-4 font-semibold text-right">Acciones</th>
                     </tr>
@@ -47,10 +47,17 @@
                         <td class="px-6 py-4 font-mono text-on-surface-variant text-[13px]">GEN-{{ genero.idgenero }}</td>
                         <td class="px-6 py-4">
                             <div class="flex items-center gap-3">
-                                <span class="font-medium text-on-surface">{{ genero.nombregenero }}</span>
+                                <div class="w-10 h-10 rounded-md bg-secondary/20 flex items-center justify-center shrink-0 overflow-hidden border border-white/5">
+                                    <span class="material-symbols-outlined text-secondary text-[20px]">category</span>
+                                </div>
+                                <span class="font-bold text-on-surface">{{ genero.nombregenero }}</span>
                             </div>
                         </td>
-                        <td class="px-6 py-4 text-on-surface-variant text-sm max-w-xs truncate">{{ genero.descripcion }}</td>
+                        <td class="px-6 py-4 text-on-surface-variant text-sm">
+                            <div class="truncate max-w-md" title="{{ genero.descripcion|default:'Sin descripción' }}">
+                                {{ genero.descripcion|default:"<span class='italic opacity-50'>Sin descripción</span>"|safe }}
+                            </div>
+                        </td>
                         <td class="px-6 py-4">
                             <div class="flex items-center justify-end gap-2">
                                 <a href="javascript:void(0);"
@@ -59,10 +66,16 @@
                                    title="Ver detalles">
                                     <span class="material-symbols-outlined text-[20px]">visibility</span>
                                 </a>
-                                <a href="{% url 'edit_genre' genero.idgenero %}" class="p-2 text-on-surface-variant hover:text-secondary transition-colors" title="Editar">
+                                <a href="javascript:void(0);"
+                                   onclick="navegarSinCortes('{% url 'edit_genre' genero.idgenero %}')"
+                                   class="p-2 text-on-surface-variant hover:text-secondary transition-colors"
+                                   title="Editar">
                                     <span class="material-symbols-outlined text-[20px]">edit</span>
                                 </a>
-                                <a href="{% url 'delete_genre' genero.idgenero %}" class="p-2 text-on-surface-variant hover:text-error transition-colors" title="Eliminar">
+                                <a href="javascript:void(0);"
+                                   onclick="window.showDeleteModal('{{ genero.idgenero }}', '{{ genero.nombregenero|escapejs }}')"
+                                   class="p-2 text-on-surface-variant hover:text-error transition-colors"
+                                   title="Eliminar">
                                     <span class="material-symbols-outlined text-[20px]">delete</span>
                                 </a>
                             </div>
@@ -81,8 +94,119 @@
         </div>
 
         <div class="p-4 border-t border-white/5 flex justify-between items-center text-on-surface-variant font-label-sm text-label-sm">
-            <div>{{ generos.count }} género{{ generos.count|pluralize:"s" }}</div>
+            <div>{{ generos.count }} categoría{{ generos.count|pluralize:"s" }}</div>
         </div>
     </div>
 </section>
+
+<div id="delete-modal" class="fixed inset-0 z-[100] hidden items-center justify-center bg-black/60 backdrop-blur-sm p-4 transition-opacity">
+    <div class="glass-ultra p-8 rounded-3xl w-full max-w-sm text-center border border-white/10 shadow-2xl transform transition-transform scale-95" id="delete-modal-content">
+        <span class="material-symbols-outlined text-5xl text-red-500 mb-4">delete_forever</span>
+
+        <h2 id="delete-modal-title" class="text-xl font-bold text-white mb-2">¿Eliminar categoría?</h2>
+
+        <p class="text-white/60 mb-8 text-sm">Esta acción no se puede deshacer. Las canciones asociadas a este género <b>no se borrarán</b>, sino que serán reasignadas automáticamente a "Sin género asignado".</p>
+
+        <div class="flex gap-4">
+            <button onclick="window.closeModal()" class="flex-1 py-3 bg-white/5 hover:bg-white/10 text-white font-bold rounded-xl transition-all">
+                Cancelar
+            </button>
+            <button id="btn-confirm-delete" onclick="window.confirmDelete()" class="flex-1 py-3 bg-red-600 hover:bg-red-700 text-white font-bold rounded-xl transition-all flex items-center justify-center gap-2">
+                Eliminar
+            </button>
+        </div>
+    </div>
+</div>
+
+<script>
+    var CSRF_TOKEN = '{{ csrf_token }}';
+    var genreToDeleteId = null;
+
+    window.showDeleteModal = function(id, nombre) {
+        genreToDeleteId = id;
+        document.getElementById('delete-modal-title').textContent = `¿Eliminar "${nombre}"?`;
+
+        const modal = document.getElementById('delete-modal');
+        const content = document.getElementById('delete-modal-content');
+        modal.classList.remove('hidden');
+        modal.classList.add('flex');
+
+        setTimeout(() => {
+            content.classList.remove('scale-95');
+            content.classList.add('scale-100');
+        }, 10);
+    }
+
+    window.closeModal = function() {
+        genreToDeleteId = null;
+        const modal = document.getElementById('delete-modal');
+        const content = document.getElementById('delete-modal-content');
+
+        content.classList.remove('scale-100');
+        content.classList.add('scale-95');
+
+        setTimeout(() => {
+            modal.classList.add('hidden');
+            modal.classList.remove('flex');
+        }, 150);
+    }
+
+    window.showToast = function(message, status) {
+        const isSuccess = status === 'success';
+        const toast = document.createElement('div');
+        toast.className = `fixed top-20 right-8 z-[100] flex items-center gap-3 px-5 py-4 rounded-lg border ${
+            isSuccess ? 'border-secondary/30 bg-surface-container text-secondary' : 'border-red-500/30 bg-surface-container text-red-400'
+        } shadow-2xl backdrop-blur-md transition-all duration-300`;
+
+        toast.innerHTML = `
+            <span class="material-symbols-outlined text-[20px]">${isSuccess ? 'check_circle' : 'error'}</span>
+            <div>
+                <p class="text-xs font-black uppercase tracking-widest opacity-60">${isSuccess ? 'Éxito' : 'Error'}</p>
+                <p class="text-sm font-bold">${message}</p>
+            </div>
+        `;
+
+        document.body.appendChild(toast);
+
+        setTimeout(() => {
+            toast.style.opacity = '0';
+            toast.style.transform = 'translateX(20px)';
+            setTimeout(() => toast.remove(), 300);
+        }, 3500);
+    }
+
+    window.confirmDelete = async function() {
+        if (!genreToDeleteId) return;
+
+        const btn = document.getElementById('btn-confirm-delete');
+        btn.disabled = true;
+        btn.innerHTML = '<span class="material-symbols-outlined animate-spin text-[20px]">progress_activity</span> Borrando...';
+
+        try {
+            const urlBase = "{% url 'delete_genre' 999999 %}";
+            const fetchUrl = urlBase.replace('999999', genreToDeleteId);
+
+            const res = await fetch(fetchUrl, {
+                method: 'POST',
+                headers: { 'X-CSRFToken': CSRF_TOKEN }
+            });
+
+            const data = await res.json();
+
+            if (res.ok && data.status === 'success') {
+                showToast('Categoría eliminada y canciones reasignadas.', 'success');
+                setTimeout(() => window.location.reload(), 800);
+            } else {
+                showToast(data.message || 'Error al intentar eliminar.', 'error');
+                window.closeModal();
+            }
+        } catch (error) {
+            showToast('Error de red al intentar eliminar.', 'error');
+            window.closeModal();
+        } finally {
+            btn.disabled = false;
+            btn.innerHTML = 'Eliminar';
+        }
+    }
+</script>
 {% endblock %}
