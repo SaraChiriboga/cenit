@@ -40,7 +40,6 @@
         outline: none !important;
     }
 
-    /* Estilo para el select nativo de Rol */
     select.native-select {
         appearance: none; -webkit-appearance: none; -moz-appearance: none;
         background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
@@ -49,7 +48,6 @@
     }
     select.native-select option { background-color: #1A1B20; color: white; padding: 10px; }
 
-    /* Scrollbar personalizado para los menús de búsqueda */
     .custom-scrollbar::-webkit-scrollbar { width: 6px; }
     .custom-scrollbar::-webkit-scrollbar-track { background: rgba(0,0,0,0.2); border-radius: 8px; }
     .custom-scrollbar::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.2); border-radius: 8px; }
@@ -65,17 +63,39 @@
             <p class="text-white/60">Registra una nueva colaboración en el catálogo de CÉNIT.</p>
         </div>
 
-        <form method="POST" id="colab-form" class="grid grid-cols-1 md:grid-cols-3 gap-8 h-full">
+        <form method="POST" id="colab-form" class="grid grid-cols-1 xl:grid-cols-3 gap-8 h-full">
             {% csrf_token %}
 
-            <div class="md:col-span-1 space-y-4">
-                <div class="aspect-square w-full rounded-3xl border border-white/10 glass-ultra flex flex-col items-center justify-center overflow-hidden shadow-2xl relative max-w-[360px] mx-auto">
-                    <span class="material-symbols-outlined text-[100px] text-secondary/40 mb-4 transition-transform duration-500" id="visual-icon">handshake</span>
-                    <span class="text-white/30 font-bold uppercase tracking-widest text-sm">Conexión</span>
+            <div class="xl:col-span-1 space-y-4">
+                <div class="aspect-square w-full rounded-3xl border border-white/10 glass-ultra flex flex-col items-center justify-center shadow-2xl relative max-w-[360px] mx-auto p-8">
+
+                    <div id="visual-empty" class="flex flex-col items-center justify-center transition-opacity duration-300">
+                        <span class="material-symbols-outlined text-[100px] text-secondary/40 mb-4 transition-transform duration-500" id="visual-icon">handshake</span>
+                        <span class="text-white/30 font-bold uppercase tracking-widest text-sm">Conexión</span>
+                    </div>
+
+                    <div id="visual-filled" class="hidden absolute inset-0 w-full h-full flex items-center justify-center bg-black/20 rounded-3xl p-8">
+                        <div class="relative w-full aspect-square max-w-[240px]">
+                            <div class="w-full h-full rounded-2xl border border-white/10 overflow-hidden bg-surface-container z-10 absolute top-0 left-0 shadow-2xl">
+                                <img id="cover-img" src="" class="w-full h-full object-cover hidden">
+                                <div id="cover-placeholder" class="w-full h-full flex items-center justify-center bg-secondary/5">
+                                    <span class="material-symbols-outlined text-6xl text-secondary/20">music_note</span>
+                                </div>
+                            </div>
+
+                            <div class="w-32 h-32 rounded-full border-4 border-[#1A1B20] overflow-hidden bg-surface-container z-20 absolute -bottom-6 -right-6 shadow-2xl ring-1 ring-white/10 transition-transform hover:scale-105">
+                                <img id="artist-img" src="" class="w-full h-full object-cover hidden">
+                                <div id="artist-placeholder" class="w-full h-full flex items-center justify-center bg-black">
+                                    <span class="material-symbols-outlined text-4xl text-white/20">person</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
                 </div>
             </div>
 
-            <div class="md:col-span-2 space-y-6">
+            <div class="xl:col-span-2 space-y-6">
                 <div class="glass-ultra p-10 rounded-3xl grid grid-cols-1 gap-8 text-white relative">
 
                     <div class="relative" id="dropdown-cancion">
@@ -97,7 +117,7 @@
                             <div class="max-h-56 overflow-y-auto custom-scrollbar" id="cancion-list">
                                 {% for c in canciones %}
                                 <div class="px-4 py-3 hover:bg-secondary/20 cursor-pointer text-sm text-white transition-colors item-option border-b border-white/5 last:border-0 flex items-center gap-3"
-                                     onclick="selectOption('cancion', '{{ c.idcancion }}', '{{ c.titulocancion|escapejs }}')">
+                                     onclick="selectOption('cancion', '{{ c.idcancion }}', '{{ c.titulocancion|escapejs }}', '{% if c.album_idalbum.urlportada %}{{ c.album_idalbum.urlportada }}{% elif c.album.urlportada %}{{ c.album.urlportada }}{% endif %}')">
                                     <span class="material-symbols-outlined text-white/30 text-[18px]">music_note</span>
                                     <span>{{ c.titulocancion }}</span>
                                 </div>
@@ -125,7 +145,7 @@
                             <div class="max-h-56 overflow-y-auto custom-scrollbar" id="artista-list">
                                 {% for a in artistas %}
                                 <div class="px-4 py-3 hover:bg-secondary/20 cursor-pointer text-sm text-white transition-colors item-option border-b border-white/5 last:border-0 flex items-center gap-3"
-                                     onclick="selectOption('artista', '{{ a.idartista }}', '{{ a.nombreartistico|escapejs }}')">
+                                     onclick="selectOption('artista', '{{ a.idartista }}', '{{ a.nombreartistico|escapejs }}', '{{ a.urlperfil|default:'' }}')">
                                     <span class="material-symbols-outlined text-white/30 text-[18px]">person</span>
                                     <span>{{ a.nombreartistico }}</span>
                                 </div>
@@ -162,16 +182,13 @@
 <script>
     var CSRF_TOKEN = '{{ csrf_token }}';
 
-    // --- LÓGICA DE LOS DROPDOWNS CON BUSCADOR ---
     function toggleDropdown(type) {
-        // Cierra el otro menú si está abierto para evitar solapamientos
         if(type !== 'cancion') document.getElementById('cancion-menu').classList.add('hidden');
         if(type !== 'artista') document.getElementById('artista-menu').classList.add('hidden');
 
         const menu = document.getElementById(`${type}-menu`);
         menu.classList.toggle('hidden');
 
-        // Auto-focus en el buscador al abrir
         if (!menu.classList.contains('hidden')) {
             document.getElementById(`${type}-search`).focus();
         }
@@ -191,23 +208,49 @@
         }
     }
 
-    function selectOption(type, id, displayText) {
-        // Asigna el ID al input oculto que viaja en el POST
+    // ACTUALIZADA: Ahora recibe un 4to parámetro opcional con la URL de la imagen
+    function selectOption(type, id, displayText, imageUrl = '') {
+        // Asignación de datos
         document.getElementById(`${type}-hidden`).value = id;
 
-        // Actualiza la interfaz visual
+        // Actualización UI Dropdown
         const displaySpan = document.getElementById(`${type}-display`);
         displaySpan.textContent = displayText;
         displaySpan.classList.remove('text-white/40');
         displaySpan.classList.add('text-white', 'font-bold');
 
-        // Cierra el menú y reacciona visualmente
         document.getElementById(`${type}-menu`).classList.add('hidden');
-        document.getElementById('visual-icon').classList.add('text-secondary', 'scale-110');
-        document.getElementById('visual-icon').classList.remove('text-secondary/40');
+
+        // TRANSICIÓN VISUAL CREATIVA
+        document.getElementById('visual-empty').classList.add('hidden');
+        document.getElementById('visual-filled').classList.remove('hidden');
+
+        // Renderizado de Imagen según el tipo
+        if (type === 'cancion') {
+            const img = document.getElementById('cover-img');
+            const placeholder = document.getElementById('cover-placeholder');
+            if (imageUrl && imageUrl.length > 5) {
+                img.src = imageUrl;
+                img.classList.remove('hidden');
+                placeholder.classList.add('hidden');
+            } else {
+                img.classList.add('hidden');
+                placeholder.classList.remove('hidden');
+            }
+        } else if (type === 'artista') {
+            const img = document.getElementById('artist-img');
+            const placeholder = document.getElementById('artist-placeholder');
+            if (imageUrl && imageUrl.length > 5) {
+                img.src = imageUrl;
+                img.classList.remove('hidden');
+                placeholder.classList.add('hidden');
+            } else {
+                img.classList.add('hidden');
+                placeholder.classList.remove('hidden');
+            }
+        }
     }
 
-    // Cierra los menús si el usuario da clic en cualquier otra parte de la pantalla
     document.addEventListener('click', function(e) {
         if (!e.target.closest('#dropdown-cancion')) {
             document.getElementById('cancion-menu')?.classList.add('hidden');
@@ -217,8 +260,6 @@
         }
     });
 
-
-    // --- SISTEMA DE TOASTS ---
     window.showToast = function(message, status) {
         const isSuccess = status === 'success';
         const toast = document.createElement('div');
@@ -242,11 +283,9 @@
         }, 3500);
     }
 
-    // --- MANEJO DEL FORMULARIO VIA AJAX ---
     document.getElementById('colab-form').onsubmit = async (e) => {
         e.preventDefault();
 
-        // Validación manual de los campos ocultos
         const cancionId = document.getElementById('cancion-hidden').value;
         const artistaId = document.getElementById('artista-hidden').value;
 
@@ -274,14 +313,19 @@
 
             if (data.status === 'success') {
                 e.target.reset();
-                // Limpiar la interfaz custom
+                // Limpiar Dropdowns
                 document.getElementById('cancion-hidden').value = '';
                 document.getElementById('artista-hidden').value = '';
                 document.getElementById('cancion-display').textContent = 'Seleccione una canción...';
                 document.getElementById('artista-display').textContent = 'Seleccione un artista...';
                 document.getElementById('cancion-display').className = 'text-white/40 font-medium';
                 document.getElementById('artista-display').className = 'text-white/40 font-medium';
-                document.getElementById('visual-icon').className = 'material-symbols-outlined text-[100px] text-secondary/40 mb-4 transition-transform duration-500';
+
+                // Reset Visualizador
+                document.getElementById('visual-filled').classList.add('hidden');
+                document.getElementById('visual-empty').classList.remove('hidden');
+                document.getElementById('cover-img').src = '';
+                document.getElementById('artist-img').src = '';
             }
         } catch (error) {
             showToast("Error crítico al guardar", "error");

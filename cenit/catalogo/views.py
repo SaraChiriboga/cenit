@@ -694,7 +694,7 @@ def add_colab(request):
             'canciones': Cancion.objects.all(),
             'artistas': Artista.objects.all(),
         }
-        return render(request, 'catalogo/colaboraciones/add_colaboracion.html', context)
+        return render(request, 'catalogo/colaboraciones/add_colab.html', context)
 
     if request.method == 'POST':
         try:
@@ -740,7 +740,6 @@ def read_colab(request, pk):
     }
     return render(request, 'catalogo/colaboraciones/read_colab.html', context)
 
-@login_required
 @login_required
 def edit_colab(request, pk):
     if request.method == 'POST':
