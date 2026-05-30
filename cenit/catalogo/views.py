@@ -41,7 +41,7 @@ def add_track_ajax(request):
         return render(request, 'catalogo/canciones/add_track.html', {
             'albumes': Album.objects.all(),
             'generos': Genero.objects.all(),
-            'artistas': Artista.objects.all(),  # <-- AÑADIDO PARA LOS SELECTS
+            'artistas': Artista.objects.all(),
         })
 
     if request.method == 'POST':
@@ -57,21 +57,22 @@ def add_track_ajax(request):
             if not titulo or not album_id:
                 return JsonResponse({'status': 'error', 'message': 'Faltan campos obligatorios.'}, status=400)
 
+            # Validar si ya existe
             if Cancion.objects.filter(titulocancion__iexact=titulo, album_id=album_id).exists():
                 return JsonResponse({'status': 'error', 'message': 'La canción ya existe en este álbum.'}, status=400)
 
             with transaction.atomic():
                 with connection.cursor() as cursor:
-                    # 1. Insertar la canción
+                    # 1. Insertar la canción y recuperar su ID en una sola instrucción usando OUTPUT
                     cursor.execute("""
                         INSERT INTO [Catalogo].[Cancion] 
                         (tituloCancion, duracionSeg, esExplicita, estadoPublicacion, urlPortada, Album_idAlbum, Genero_idGenero, spotifyUrlAPI)
+                        OUTPUT inserted.idCancion
                         VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
                     """, [titulo, duracion or 0, 1 if es_explicita else 0, 'Borrador', url_portada, album_id, genero_id,
                           spotify_url])
 
-                    # 2. Obtener el ID de la canción recién insertada
-                    cursor.execute("SELECT SCOPE_IDENTITY()")
+                    # 2. Capturar el ID que devolvió el OUTPUT
                     cancion_id = cursor.fetchone()[0]
 
                     # 3. Procesar los colaboradores dinámicos
@@ -146,12 +147,28 @@ def check_existence(request):
 
     return JsonResponse({'existe': existe})
 
+
+@login_required
 def delete_track(request, pk):
     if request.method == 'POST':
-        cancion = get_object_or_404(Cancion, pk=pk)
-        cancion.delete()
-        return JsonResponse({'status': 'success'})
-    return JsonResponse({'status': 'error'}, status=400)
+        try:
+            with transaction.atomic():
+                with connection.cursor() as cursor:
+                    # 1. Eliminar dependencias en otros esquemas y tablas
+                    cursor.execute("DELETE FROM [Catalogo].[Colaboracion] WHERE Cancion_idCancion = %s", [pk])
+                    cursor.execute("DELETE FROM [Usuario].[CancionFavorita] WHERE Cancion_idCancion = %s", [pk])
+                    cursor.execute("DELETE FROM [Usuario].[PlaylistCancion] WHERE Cancion_idCancion = %s", [pk])
+                    cursor.execute("DELETE FROM [Auditoria].[EstadisticaDiaria] WHERE Cancion_idCancion = %s", [pk])
+
+                    # 2. Eliminar la pista principal
+                    cursor.execute("DELETE FROM [Catalogo].[Cancion] WHERE idCancion = %s", [pk])
+
+            return JsonResponse({'status': 'success'})
+
+        except Exception as e:
+            return JsonResponse({'status': 'error', 'message': f"Error al eliminar la pista: {str(e)}"}, status=400)
+
+    return JsonResponse({'status': 'error', 'message': 'Método no permitido'}, status=405)
 
 
 @login_required
