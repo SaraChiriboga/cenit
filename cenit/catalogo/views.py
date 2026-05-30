@@ -740,12 +740,22 @@ def read_colab(request, pk):
     }
     return render(request, 'catalogo/colaboraciones/read_colab.html', context)
 
+
 @login_required
 def edit_colab(request, pk):
+    colaboracion = get_object_or_404(Colaboracion.objects.select_related('cancion', 'artista'), idcolaboracion=pk)
+
+    if request.method == 'GET':
+        context = {
+            'colaboracion': colaboracion,
+            'canciones': Cancion.objects.all(),
+            'artistas': Artista.objects.all(),
+        }
+        return render(request, 'catalogo/colaboraciones/edit_colab.html', context)
+
     if request.method == 'POST':
         try:
             with connection.cursor() as cursor:
-                # UPDATE CORREGIDO (Apuntando a rolArtista)
                 cursor.execute("""
                     UPDATE [Catalogo].[Colaboracion]
                     SET Cancion_idCancion = %s,
@@ -755,7 +765,7 @@ def edit_colab(request, pk):
                 """, [
                     request.POST.get('cancion'),
                     request.POST.get('artista'),
-                    request.POST.get('rol'),  # El input de HTML sigue llamándose 'rol'
+                    request.POST.get('rol'),
                     pk
                 ])
             return JsonResponse({'status': 'success', 'message': 'Colaboración actualizada.'})
