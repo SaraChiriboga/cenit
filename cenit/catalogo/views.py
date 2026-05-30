@@ -1,14 +1,19 @@
 import urllib
+from io import BytesIO
 
 import requests
 from django.contrib import messages
-from django.http import JsonResponse
+from django.core.mail import EmailMessage
+from django.http import JsonResponse, HttpResponse
 from django.shortcuts import render, get_object_or_404, redirect
 from django.contrib.auth.decorators import login_required
 from django.db.models import Q
+from django.template.loader import render_to_string
 from django.views.decorators.csrf import csrf_exempt
 from django.db import transaction
+from xhtml2pdf import pisa
 
+from cenit import settings
 from .models import Cancion, Artista, Album, Genero, Colaboracion
 from .spotify_service import SpotifyClient
 
@@ -930,3 +935,116 @@ def delete_colab(request, pk):
             return JsonResponse({'status': 'error', 'message': f"Error: {str(e)}"}, status=400)
 
     return JsonResponse({'status': 'error', 'message': 'Método no permitido'}, status=405)
+
+# ══════════════════════════════════════════
+#  REPORTES DEL CATÁLOGO (SQL Objects)
+# ══════════════════════════════════════════
+# Helper para extraer datos limpios de la base de datos
+def _obtener_datos_sql(query, params=None):
+    with connection.cursor() as cursor:
+        cursor.execute(query, params or [])
+        columns = [col[0] for col in cursor.description]
+        return [dict(zip(columns, row)) for row in cursor.fetchall()]
+
+
+# ── VISTAS BASE DE REPORTE (PANTALLA) ──
+@login_required
+def reporte_top_10(request):
+    canciones = []
+    try:
+        canciones = _obtener_datos_sql("EXEC Auditoria.sp_RankingPopularidadMensual")
+    except Exception as e:
+        messages.error(request, f"Error SQL: {str(e)}")
+    return render(request, 'catalogo/reportes/reporte_top_10.html', {'canciones': canciones})
+
+
+@login_required
+def reporte_auditoria_catalogo(request):
+    inconsistencias = []
+    try:
+        inconsistencias = _obtener_datos_sql("SELECT * FROM Catalogo.vw_AuditoriaMetadatosIncompletos")
+    except Exception as e:
+        messages.error(request, f"Error SQL: {str(e)}")
+    return render(request, 'catalogo/reportes/reporte_auditoria.html',
+                  {'inconsistencias': inconsistencias})  # <-- CORREGIDO
+
+
+@login_required
+def exportar_top_10_pdf(request):
+    try:
+        canciones = _obtener_datos_sql("EXEC Auditoria.sp_RankingPopularidadMensual")
+        # Apunta al nuevo template dedicado para PDF
+        html_string = render_to_string('catalogo/reportes/pdf_top_10.html', {'canciones': canciones}, request=request)
+
+        response = HttpResponse(content_type='application/pdf')
+        response['Content-Disposition'] = 'attachment; filename="Top_10_Popularidad_Mensual.pdf"'
+
+        pisa_status = pisa.CreatePDF(html_string, dest=response)
+        if pisa_status.err: return HttpResponse('Error al generar PDF', status=500)
+        return response
+    except Exception as e:
+        return HttpResponse(f"Error al generar PDF: {str(e)}", status=500)
+
+
+@login_required
+def enviar_top_10_correo(request):
+    try:
+        canciones = _obtener_datos_sql("EXEC Auditoria.sp_RankingPopularidadMensual")
+        html_string = render_to_string('catalogo/reportes/pdf_top_10.html', {'canciones': canciones}, request=request)
+
+        pdf_buffer = BytesIO()
+        pisa.CreatePDF(html_string, dest=pdf_buffer)
+
+        email = EmailMessage(
+            subject='CÉNIT Reporte: Top 10 Popularidad Mensual',
+            body='Adjuntamos el reporte ejecutivo de las pistas más reproducidas solicitado desde la consola.',
+            from_email=settings.DEFAULT_FROM_EMAIL,
+            to=[request.user.email or 'admin@cenit.com']
+        )
+        email.attach('Top_10_Popularidad_Mensual.pdf', pdf_buffer.getvalue(), 'application/pdf')
+        email.send()
+
+        return JsonResponse({'status': 'success', 'message': 'Reporte enviado a tu correo correctamente.'})
+    except Exception as e:
+        return JsonResponse({'status': 'error', 'message': str(e)}, status=500)
+
+
+@login_required
+def exportar_auditoria_pdf(request):
+    try:
+        inconsistencias = _obtener_datos_sql("SELECT * FROM Catalogo.vw_AuditoriaMetadatosIncompletos")
+        html_string = render_to_string('catalogo/reportes/pdf_auditoria.html', {'inconsistencias': inconsistencias},
+                                       request=request)
+
+        response = HttpResponse(content_type='application/pdf')
+        response['Content-Disposition'] = 'attachment; filename="Auditoria_Metadatos_Catalogo.pdf"'
+
+        pisa_status = pisa.CreatePDF(html_string, dest=response)
+        if pisa_status.err: return HttpResponse('Error al generar PDF', status=500)
+        return response
+    except Exception as e:
+        return HttpResponse(f"Error al generar PDF: {str(e)}", status=500)
+
+
+@login_required
+def enviar_auditoria_correo(request):
+    try:
+        inconsistencias = _obtener_datos_sql("SELECT * FROM Catalogo.vw_AuditoriaMetadatosIncompletos")
+        html_string = render_to_string('catalogo/reportes/pdf_auditoria.html', {'inconsistencias': inconsistencias},
+                                       request=request)
+
+        pdf_buffer = BytesIO()
+        pisa.CreatePDF(html_string, dest=pdf_buffer)
+
+        email = EmailMessage(
+            subject='CÉNIT Reporte: Auditoría de Calidad del Catálogo',
+            body='Adjuntamos el informe técnico con las inconsistencias de metadatos para su revisión.',
+            from_email=settings.DEFAULT_FROM_EMAIL,
+            to=[request.user.email or 'admin@cenit.com']
+        )
+        email.attach('Auditoria_Metadatos_Catalogo.pdf', pdf_buffer.getvalue(), 'application/pdf')
+        email.send()
+
+        return JsonResponse({'status': 'success', 'message': 'Informe técnico enviado por correo.'})
+    except Exception as e:
+        return JsonResponse({'status': 'error', 'message': str(e)}, status=500)

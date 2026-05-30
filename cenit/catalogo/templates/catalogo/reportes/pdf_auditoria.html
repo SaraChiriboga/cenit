@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>Auditoría de Metadatos - CÉNIT</title>
+    <style>
+        @page {
+            size: A4 portrait; margin: 0;
+            @frame header_frame { top: 0cm; left: 0cm; width: 21cm; height: 4.5cm; -pdf-frame-content: header_content; }
+            @frame content_frame { top: 5.5cm; left: 1.5cm; width: 18cm; height: 22.5cm; }
+            @frame footer_frame { bottom: 0cm; left: 0cm; width: 21cm; height: 1.5cm; -pdf-frame-content: footer_content; }
+        }
+        body { font-family: Helvetica, sans-serif; font-size: 10pt; color: #333333; }
+
+        #header_content { background-color: #0B0C10; color: #ffffff; padding: 30px 40px; }
+        .office-info { margin-top: 15px; font-size: 9pt; color: #bac9ca; line-height: 1.4; }
+        .report-type { font-size: 24pt; font-weight: bold; color: #45F3FF; text-align: right; text-transform: uppercase; margin-bottom: 5px; }
+        .report-subtitle { font-size: 10pt; color: #ffffff; text-align: right; letter-spacing: 1.5px; text-transform: uppercase; }
+
+        .main-title { font-size: 18pt; font-weight: bold; color: #1a1b20; margin-bottom: 8px; border-bottom: 2px solid #cc0000; padding-bottom: 5px; }
+        .main-desc { font-size: 10pt; color: #666666; margin-bottom: 30px; line-height: 1.4; }
+
+        table.data-table { width: 100%; border-collapse: collapse; }
+        table.data-table th { background-color: #1a1b20; color: #45F3FF; padding: 12px; font-size: 9pt; text-align: left; text-transform: uppercase; border: none; }
+        table.data-table td { padding: 12px; border-bottom: 1px solid #e0e0e0; font-size: 10pt; vertical-align: middle; }
+
+        .track-title { font-weight: bold; color: #111111; font-size: 11pt; }
+        .badge-error { background-color: #ffe6e6; color: #cc0000; border: 1px solid #cc0000; padding: 4px 8px; font-size: 8pt; font-weight: bold; border-radius: 4px; text-transform: uppercase; }
+        .badge-ok { color: #888888; font-size: 9pt; }
+        .mono-id { font-family: Courier, monospace; color: #555555; }
+
+        #footer_content { background-color: #0B0C10; color: #45F3FF; padding: 12px; text-align: center; font-size: 8pt; letter-spacing: 2px; }
+    </style>
+</head>
+<body>
+    <div id="header_content">
+        <table width="100%">
+            <tr>
+                <td width="50%">
+                    <img src="data:image/png;base64,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" height="35" alt="CÉNIT Logo" />
+                    <div class="office-info">
+                        <strong>Universidad de las Américas</strong><br>
+                        Campus UdlaPark, Vía a Nayón<br>
+                        Quito 170124, Ecuador
+                    </div>
+                </td>
+                <td width="50%">
+                    <div class="report-type" style="color: #cc0000;">AUDITORÍA</div>
+                    <div class="report-subtitle">METADATOS DE CATÁLOGO</div>
+                </td>
+            </tr>
+        </table>
+    </div>
+
+    <div id="footer_content">
+        CÉNIT PLATAFORMA MUSICAL &bull; PÁGINA <pdf:pagenumber> DE <pdf:pagecount>
+    </div>
+
+    <div>
+        <div class="main-title">Informe de Calidad e Integridad de Datos</div>
+        <div class="main-desc">Análisis estructural de pistas musicales que presentan carencias en asociaciones críticas (Género o Jerarquía de Álbum) y requieren una revisión administrativa inmediata.</div>
+
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th width="15%">ID Track</th>
+                    <th width="35%">Título de la Pista</th>
+                    <th width="25%">Estado de Género</th>
+                    <th width="25%">Jerarquía Álbum</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for i in inconsistencias %}
+                <tr>
+                    <td class="mono-id">TRK-{{ i.idCancion }}</td>
+                    <td class="track-title">{{ i.tituloCancion }}</td>
+                    <td>
+                        {% if i.EstatusGenero == 'SIN GÉNERO' %}
+                            <span class="badge-error">Falta Género</span>
+                        {% else %}
+                            <span class="badge-ok">Asignado</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% if i.EstatusJerarquia == 'Sin Álbum vinculado' %}
+                            <span class="badge-error">Huérfano</span>
+                        {% else %}
+                            <span class="badge-ok">Correcto</span>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="4" style="text-align: center; padding: 40px; font-weight: bold; color: #008000;">
+                        ¡Excelente! No se encontraron inconsistencias en la base de datos.
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</body>
+</html>

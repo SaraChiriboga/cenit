@@ -110,43 +110,31 @@
                 <div class="submenu {% if url_name in catalog_urls %}open{% endif %}" id="catalog-submenu">
                     <div class="ml-4 pl-3 border-l border-white/10 mt-1 flex flex-col gap-0.5 pb-2">
 
-                        <a href="{% url 'songs_overview' %}"
-                           class="submenu-item px-3 py-2 rounded-r-lg text-sm transition-all
-                           {% if 'songs_overview' in request.resolver_match.url_name or 'add_track' in request.resolver_match.url_name or 'edit_track' in request.resolver_match.url_name or 'read_track' in request.resolver_match.url_name%}
-                               active
-                           {% else %}
-                               text-on-surface-variant hover:text-on-surface hover:bg-white/5
-                           {% endif %}">
-                            <span class="material-symbols-outlined text-[16px]">music_note</span>
-                           Canciones
+                        <a href="{% url 'songs_overview' %}" class="submenu-item px-3 py-2 rounded-r-lg text-sm transition-all {% if 'songs' in url_name %}active{% else %}text-on-surface-variant hover:text-on-surface hover:bg-white/5{% endif %}">
+                            <span class="material-symbols-outlined text-[16px]">music_note</span> Canciones
+                        </a>
+                        <a href="{% url 'artists_overview' %}" class="submenu-item flex items-center gap-3 px-3 py-2 rounded-r-lg text-sm transition-all duration-150 {% if 'artists' in url_name %}active{% else %}text-on-surface-variant hover:text-on-surface hover:bg-white/5{% endif %}">
+                            <span class="material-symbols-outlined text-[16px]">person</span> Artistas
+                        </a>
+                        <a href="{% url 'albums_overview' %}" class="submenu-item flex items-center gap-3 px-3 py-2 rounded-r-lg text-sm transition-all duration-150 {% if 'albums' in url_name %}active{% else %}text-on-surface-variant hover:text-on-surface hover:bg-white/5{% endif %}">
+                            <span class="material-symbols-outlined text-[16px]">album</span> Álbumes
+                        </a>
+                        <a href="{% url 'genre_overview' %}" class="submenu-item flex items-center gap-3 px-3 py-2 rounded-r-lg text-sm transition-all duration-150 {% if 'genre' in url_name %}active{% else %}text-on-surface-variant hover:text-on-surface hover:bg-white/5{% endif %}">
+                            <span class="material-symbols-outlined text-[16px]">category</span> Géneros
+                        </a>
+                        <a href="{% url 'colabs_overview' %}" class="submenu-item flex items-center gap-3 px-3 py-2 rounded-r-lg text-sm transition-all duration-150 {% if 'colabs' in url_name %}active{% else %}text-on-surface-variant hover:text-on-surface hover:bg-white/5{% endif %}">
+                            <span class="material-symbols-outlined text-[16px]">group_work</span> Colaboraciones
                         </a>
 
-                        <a href="{% url 'artists_overview' %}"
-                           class="submenu-item flex items-center gap-3 px-3 py-2 rounded-r-lg text-sm transition-all duration-150
-                                  {% if request.resolver_match.url_name == 'artists_overview' %}active{% else %}text-on-surface-variant hover:text-on-surface hover:bg-white/5{% endif %}">
-                            <span class="material-symbols-outlined text-[16px]">person</span>
-                            Artistas
+                        <div class="h-px bg-white/10 my-2"></div>
+                        <span class="text-xs text-on-surface-variant/60 px-3 py-1 uppercase tracking-wider font-bold">Reportes</span>
+
+                        <a href="{% url 'reporte_top_10' %}" class="submenu-item flex items-center gap-3 px-3 py-2 rounded-r-lg text-sm transition-all duration-150 {% if request.resolver_match.url_name == 'reporte_top_10' %}active{% else %}text-on-surface-variant hover:text-on-surface hover:bg-white/5{% endif %}">
+                            <span class="material-symbols-outlined text-[16px] text-yellow-500">trophy</span> Top 10 Mensual
                         </a>
 
-                        <a href="{% url 'albums_overview' %}"
-                           class="submenu-item flex items-center gap-3 px-3 py-2 rounded-r-lg text-sm transition-all duration-150
-                                  {% if request.resolver_match.url_name == 'albums_overview' %}active{% else %}text-on-surface-variant hover:text-on-surface hover:bg-white/5{% endif %}">
-                            <span class="material-symbols-outlined text-[16px]">album</span>
-                            Álbumes
-                        </a>
-
-                        <a href="{% url 'genre_overview' %}"
-                           class="submenu-item flex items-center gap-3 px-3 py-2 rounded-r-lg text-sm transition-all duration-150
-                                  {% if request.resolver_match.url_name == 'genre_overview' %}active{% else %}text-on-surface-variant hover:text-on-surface hover:bg-white/5{% endif %}">
-                            <span class="material-symbols-outlined text-[16px]">category</span>
-                            Géneros
-                        </a>
-
-                        <a href="{% url 'colabs_overview' %}"
-                           class="submenu-item flex items-center gap-3 px-3 py-2 rounded-r-lg text-sm transition-all duration-150
-                                  {% if request.resolver_match.url_name == 'colabs_overview' %}active{% else %}text-on-surface-variant hover:text-on-surface hover:bg-white/5{% endif %}">
-                            <span class="material-symbols-outlined text-[16px]">group_work</span>
-                            Colaboraciones
+                        <a href="{% url 'reporte_auditoria_catalogo' %}" class="submenu-item flex items-center gap-3 px-3 py-2 rounded-r-lg text-sm transition-all duration-150 {% if request.resolver_match.url_name == 'reporte_auditoria_catalogo' %}active{% else %}text-on-surface-variant hover:text-on-surface hover:bg-white/5{% endif %}">
+                            <span class="material-symbols-outlined text-[16px] text-error">health_and_safety</span> Auditoría de Metadatos
                         </a>
 
                     </div>
@@ -215,7 +203,7 @@
 
                         <div class="h-px bg-white/10 my-2"></div>
 
-                        <span class="text-xs text-on-surface-variant/60 px-3 py-1">Reportes</span>
+                        <span class="text-xs text-on-surface-variant/60 px-3 py-1 uppercase tracking-wider font-bold">Reportes</span>
 
                         <a href="{% url 'reporte_vencimientos' %}"
                            class="submenu-item flex items-center gap-3 px-3 py-2 rounded-r-lg text-sm transition-all duration-150

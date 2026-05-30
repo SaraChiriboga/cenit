@@ -42,4 +42,13 @@ urlpatterns = [
     path('colaboraciones/<int:pk>/', views.read_colab, name='read_colab'),
     path('colaboraciones/<int:pk>/edit/', views.edit_colab, name='edit_colab'),
     path('colaboraciones/<int:pk>/delete/', views.delete_colab, name='delete_colab'),
+
+    # ── Reportes específicos ──
+    path('reportes/top-10/', views.reporte_top_10, name='reporte_top_10'),
+    path('reportes/top-10/pdf/', views.exportar_top_10_pdf, name='exportar_top_10_pdf'),
+    path('reportes/top-10/correo/', views.enviar_top_10_correo, name='enviar_top_10_correo'),
+
+    path('reportes/auditoria-metadatos/', views.reporte_auditoria_catalogo, name='reporte_auditoria_catalogo'),
+    path('reportes/auditoria-metadatos/pdf/', views.exportar_auditoria_pdf, name='exportar_auditoria_pdf'),
+    path('reportes/auditoria-metadatos/correo/', views.enviar_auditoria_correo, name='enviar_auditoria_correo'),
 ]
