@@ -37,8 +37,9 @@ urlpatterns = [
     path('generos/<int:pk>/delete/', views.delete_genre, name='delete_genre'),
 
     # ── Colaboraciones ──
-    path('colaboraciones/', views.colaboracion_list, name='colabs_overview'),
-    path('colaboraciones/add/', views.colaboracion_add, name='colaboracion_add'),
-    path('colaboraciones/<int:pk>/edit/', views.colaboracion_edit, name='colaboracion_edit'),
-    path('colaboraciones/<int:pk>/delete/', views.colaboracion_delete, name='colaboracion_delete'),
+    path('colaboraciones/', views.colabs_overview, name='colabs_overview'),
+    path('colaboraciones/add/', views.add_colab, name='add_colab'),
+    path('colaboraciones/<int:pk>/', views.read_colab, name='read_colab'),
+    path('colaboraciones/<int:pk>/edit/', views.edit_colab, name='edit_colab'),
+    path('colaboraciones/<int:pk>/delete/', views.delete_colab, name='delete_colab'),
 ]

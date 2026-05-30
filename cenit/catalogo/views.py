@@ -668,43 +668,112 @@ def delete_genre(request, pk):
 # ══════════════════════════════════════════
 #  COLABORACIONES
 # ══════════════════════════════════════════
-
 @login_required
-def colaboracion_list(request):
-    colaboraciones = Colaboracion.objects.select_related('cancion', 'artista').all()
+def colabs_overview(request):
     query = request.GET.get('q', '')
     if query:
-        colaboraciones = colaboraciones.filter(
-            Q(artista__nombreartistico__icontains=query) | Q(cancion__titulocancion__icontains=query)
+        # Usamos Q para hacer el OR internamente sin duplicar filas
+        colaboraciones = Colaboracion.objects.select_related('cancion', 'artista').filter(
+            Q(artista__nombreartistico__icontains=query) |
+            Q(cancion__titulocancion__icontains=query)
         )
-    return render(request, 'catalogo/colaboraciones/colabs_overview.html', {'colaboraciones': colaboraciones, 'query': query})
+    else:
+        colaboraciones = Colaboracion.objects.select_related('cancion', 'artista').all()
+
+    context = {
+        'colaboraciones': colaboraciones,
+        'query': query
+    }
+    return render(request, 'catalogo/colaboraciones/colabs_overview.html', context)
 
 
 @login_required
-def colaboracion_add(request):
-    canciones = Cancion.objects.all()
-    artistas = Artista.objects.all()
-    return render(request, 'catalogo/colaboraciones/colaboracion_form.html', {
-        'action': 'Agregar', 'colaboracion': None,
-        'canciones': canciones, 'artistas': artistas,
-    })
+def add_colab(request):
+    if request.method == 'GET':
+        context = {
+            'canciones': Cancion.objects.all(),
+            'artistas': Artista.objects.all(),
+        }
+        return render(request, 'catalogo/colaboraciones/add_colaboracion.html', context)
 
-
-@login_required
-def colaboracion_edit(request, pk):
-    colaboracion = get_object_or_404(Colaboracion, idcolaboracion=pk)
-    canciones = Cancion.objects.all()
-    artistas = Artista.objects.all()
-    return render(request, 'catalogo/colaboraciones/colaboracion_form.html', {
-        'action': 'Editar', 'colaboracion': colaboracion,
-        'canciones': canciones, 'artistas': artistas,
-    })
-
-
-@login_required
-def colaboracion_delete(request, pk):
-    colaboracion = get_object_or_404(Colaboracion, idcolaboracion=pk)
     if request.method == 'POST':
-        messages.success(request, "Colaboración eliminada.")
-        return redirect('colaboracion_list')
-    return render(request, 'catalogo/colaboraciones/confirm_delete.html', {'objeto': colaboracion, 'tipo': 'colaboración'})
+        try:
+            id_cancion = request.POST.get('cancion')
+            id_artista = request.POST.get('artista')
+            rol_obtenido = request.POST.get('rol', '').strip()  # Lo recibimos del form como 'rol'
+
+            if not all([id_cancion, id_artista, rol_obtenido]):
+                return JsonResponse({'status': 'error', 'message': 'Todos los campos son obligatorios.'}, status=400)
+
+            with connection.cursor() as cursor:
+                # Verificación de duplicado
+                cursor.execute("""
+                    SELECT idColaboracion FROM [Catalogo].[Colaboracion] 
+                    WHERE Cancion_idCancion = %s AND Artista_idArtista = %s
+                """, [id_cancion, id_artista])
+
+                if cursor.fetchone():
+                    return JsonResponse(
+                        {'status': 'error', 'message': 'Este artista ya está vinculado a esta canción.'}, status=400)
+
+                # INSERCIÓN CORREGIDA (Apuntando a rolArtista)
+                cursor.execute("""
+                    INSERT INTO [Catalogo].[Colaboracion] (Cancion_idCancion, Artista_idArtista, rolArtista)
+                    VALUES (%s, %s, %s)
+                """, [id_cancion, id_artista, rol_obtenido])
+
+            return JsonResponse({'status': 'success', 'message': 'Colaboración registrada.'})
+
+        except Exception as e:
+            return JsonResponse({'status': 'error', 'message': str(e)}, status=400)
+
+    return JsonResponse({'status': 'error', 'message': 'Método no permitido'}, status=405)
+
+@login_required
+def read_colab(request, pk):
+    colaboracion = get_object_or_404(Colaboracion.objects.select_related('cancion', 'artista'), idcolaboracion=pk)
+    # Mandamos las listas para el modo edición inline
+    context = {
+        'colaboracion': colaboracion,
+        'canciones': Cancion.objects.all(),
+        'artistas': Artista.objects.all(),
+    }
+    return render(request, 'catalogo/colaboraciones/read_colab.html', context)
+
+@login_required
+@login_required
+def edit_colab(request, pk):
+    if request.method == 'POST':
+        try:
+            with connection.cursor() as cursor:
+                # UPDATE CORREGIDO (Apuntando a rolArtista)
+                cursor.execute("""
+                    UPDATE [Catalogo].[Colaboracion]
+                    SET Cancion_idCancion = %s,
+                        Artista_idArtista = %s,
+                        rolArtista = %s
+                    WHERE idColaboracion = %s
+                """, [
+                    request.POST.get('cancion'),
+                    request.POST.get('artista'),
+                    request.POST.get('rol'),  # El input de HTML sigue llamándose 'rol'
+                    pk
+                ])
+            return JsonResponse({'status': 'success', 'message': 'Colaboración actualizada.'})
+        except Exception as e:
+            return JsonResponse({'status': 'error', 'message': str(e)}, status=400)
+
+    return colabs_overview(request)
+
+@login_required
+def delete_colab(request, pk):
+    if request.method == 'POST':
+        try:
+            with connection.cursor() as cursor:
+                # La eliminación aquí es sencilla porque nadie depende de esta tabla intermedia
+                cursor.execute("DELETE FROM [Catalogo].[Colaboracion] WHERE idColaboracion = %s", [pk])
+            return JsonResponse({'status': 'success'})
+        except Exception as e:
+            return JsonResponse({'status': 'error', 'message': f"Error: {str(e)}"}, status=400)
+
+    return JsonResponse({'status': 'error', 'message': 'Método no permitido'}, status=405)
