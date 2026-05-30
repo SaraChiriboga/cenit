@@ -1,90 +1,117 @@
 <!DOCTYPE html>
-<html>
+<html lang="es">
 <head>
     <meta charset="utf-8">
     <title>Top 10 Mensual - CÉNIT</title>
     <style>
-        /* Diseño avanzado para xhtml2pdf */
         @page {
-            size: A4 portrait; margin: 0;
-            @frame header_frame { top: 0cm; left: 0cm; width: 21cm; height: 4.5cm; -pdf-frame-content: header_content; }
-            @frame content_frame { top: 5.5cm; left: 1.5cm; width: 18cm; height: 22.5cm; }
-            @frame footer_frame { bottom: 0cm; left: 0cm; width: 21cm; height: 1.5cm; -pdf-frame-content: footer_content; }
+            size: A4 portrait;
+            margin: 1.5cm;
+            @bottom-right {
+                content: "Página " counter(page) " de " counter(pages);
+                font-family: 'Helvetica', sans-serif; font-size: 8pt; color: #888;
+            }
+            @bottom-left {
+                content: "ID Documento: RPT-{{ fecha_generacion|date:'Ymd' }}-TOP10";
+                font-family: 'Helvetica', sans-serif; font-size: 8pt; color: #888;
+            }
         }
-        body { font-family: Helvetica, sans-serif; font-size: 10pt; color: #333333; }
 
-        #header_content { background-color: #0B0C10; color: #ffffff; padding: 30px 40px; }
-        .office-info { margin-top: 15px; font-size: 9pt; color: #bac9ca; line-height: 1.4; }
-        .report-type { font-size: 24pt; font-weight: bold; color: #45F3FF; text-align: right; text-transform: uppercase; margin-bottom: 5px; }
-        .report-subtitle { font-size: 10pt; color: #ffffff; text-align: right; letter-spacing: 1.5px; text-transform: uppercase; }
+        body { font-family: 'Helvetica', sans-serif; font-size: 10pt; color: #1a1b20; margin: 0; }
 
-        .main-title { font-size: 18pt; font-weight: bold; color: #1a1b20; margin-bottom: 8px; border-bottom: 2px solid #00c5bb; padding-bottom: 5px; }
-        .main-desc { font-size: 10pt; color: #666666; margin-bottom: 30px; line-height: 1.4; }
+        /* CABECERA CORPORATIVA */
+        .header-container { display: flex; justify-content: space-between; align-items: center; margin-bottom: 40px; border-bottom: 3px solid #1a1b20; padding-bottom: 20px; }
 
-        table.data-table { width: 100%; border-collapse: collapse; }
-        table.data-table th { background-color: #1a1b20; color: #45F3FF; padding: 12px; font-size: 9pt; text-align: left; text-transform: uppercase; border: none; }
-        table.data-table td { padding: 12px; border-bottom: 1px solid #e0e0e0; font-size: 10pt; vertical-align: middle; }
+        /* LOGO GRANDE Y LEGIBLE */
+        .brand-block { display: flex; align-items: center; gap: 12px; }
+        .logo-diamond { width: 55px; height: 55px; }
+        .brand-text { font-size: 38pt; font-weight: 900; letter-spacing: 2px; color: #1a1b20; line-height: 1; }
+        .brand-dot { color: #45F3FF; }
 
-        .rank { font-weight: bold; color: #00c5bb; font-size: 13pt; text-align: center; }
-        .track-title { font-weight: bold; color: #111111; font-size: 11pt; }
-        .artist { color: #777777; }
-        .repros { font-weight: bold; color: #1a1b20; text-align: right; font-family: Courier, monospace; font-size: 12pt; }
+        .office-info { font-size: 9pt; color: #666; margin-top: 10px; line-height: 1.3; }
 
-        #footer_content { background-color: #0B0C10; color: #45F3FF; padding: 12px; text-align: center; font-size: 8pt; letter-spacing: 2px; }
+        .report-meta-box { text-align: right; }
+        .report-badge { background-color: #1a1b20; color: #45F3FF; padding: 5px 15px; font-weight: bold; font-size: 10pt; display: inline-block; margin-bottom: 10px; }
+        .meta-text { font-size: 8.5pt; color: #444; line-height: 1.5; }
+        .meta-text strong { color: #000; }
+
+        /* CUERPO DEL REPORTE */
+        .main-title { font-size: 20pt; font-weight: bold; color: #1a1b20; margin-bottom: 5px; }
+        .main-desc { font-size: 10.5pt; color: #555; margin-bottom: 30px; }
+
+        table.data-table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+        table.data-table th { background-color: #1a1b20; color: #ffffff; padding: 14px; text-align: left; font-size: 9pt; text-transform: uppercase; border: none; }
+        table.data-table td { padding: 12px 14px; border-bottom: 1px solid #eee; font-size: 10.5pt; vertical-align: middle; }
+
+        .rank-col { font-weight: 900; color: #00c5bb; font-size: 14pt; width: 60px; text-align: center; }
+        .title-col { font-weight: bold; }
+        .artist-col { color: #666; }
+        .repros-col { font-family: 'Courier', monospace; font-weight: bold; text-align: right; font-size: 12pt; }
+
+        /* NOTA AL PIE DE TABLA */
+        .footer-note { margin-top: 50px; padding: 20px; background-color: #f8fafc; border-left: 5px solid #45F3FF; page-break-inside: avoid; }
+        .footer-note-title { font-weight: bold; text-transform: uppercase; font-size: 8pt; letter-spacing: 1px; color: #1a1b20; display: block; margin-bottom: 8px; }
     </style>
 </head>
 <body>
-    <div id="header_content">
-        <table width="100%">
+
+    <div class="header-container">
+        <div>
+            <div class="brand-block">
+                <svg class="logo-diamond" viewBox="0 0 50 60" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M10 30L25 10L40 30L25 50L10 30Z" stroke="#45F3FF" stroke-width="2.5" fill="none"/>
+                    <path d="M18 30L25 20L32 30L25 40L18 30Z" fill="#45F3FF"/>
+                </svg>
+                <div class="brand-text">CÉNIT<span class="brand-dot">.</span></div>
+            </div>
+            <div class="office-info">
+                <strong>Universidad de las Américas</strong><br>
+                Campus UdlaPark, Vía a Nayón · Quito 170124, Ecuador
+            </div>
+        </div>
+
+        <div class="report-meta-box">
+            <div class="report-badge">REPORTE EJECUTIVO</div>
+            <div class="meta-text">
+                <strong>Emisión:</strong> {{ fecha_generacion|date:"d/m/Y H:i" }}<br>
+                <strong>Responsable:</strong> {{ usuario_generador }}<br>
+                <strong>Versión:</strong> {{ version|default:"v2.1.0" }}
+            </div>
+        </div>
+    </div>
+
+    <div class="main-title">Ranking de Popularidad Mensual</div>
+    <div class="main-desc">Análisis de rendimiento musical basado en interacciones directas y reproducciones únicas durante el último periodo consolidado de 30 días.</div>
+
+    <table class="data-table">
+        <thead>
             <tr>
-                <td width="50%">
-                    <img src="data:image/png;base64,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" height="35" alt="CÉNIT Logo" />
-                    <div class="office-info">
-                        <strong>Universidad de las Américas</strong><br>
-                        Campus UdlaPark, Vía a Nayón<br>
-                        Quito 170124, Ecuador
-                    </div>
-                </td>
-                <td width="50%">
-                    <div class="report-type">REPORTE</div>
-                    <div class="report-subtitle">TOP 10 POPULARIDAD MENSUAL</div>
-                </td>
+                <th>RANK</th>
+                <th>TÍTULO DE LA PISTA</th>
+                <th>ARTISTA</th>
+                <th style="text-align: right;">REPRODUCCIONES</th>
             </tr>
-        </table>
+        </thead>
+        <tbody>
+            {% for c in canciones %}
+            <tr>
+                <td class="rank-col">#{{ forloop.counter }}</td>
+                <td class="title-col">{{ c.tituloCancion }}</td>
+                <td class="artist-col">{{ c.nombreArtistico }}</td>
+                <td class="repros-col">{{ c.total_escuchas_mes }}</td>
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="4" style="text-align: center; padding: 50px; color: #999;">Sin datos suficientes para este periodo.</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <div class="footer-note">
+        <span class="footer-note-title">Certificación de Datos</span>
+        Este documento certifica las métricas registradas en la plataforma de streaming CÉNIT. Los datos son inalterables y han sido auditados mediante el sistema central de administración de la Universidad de las Américas.
     </div>
 
-    <div id="footer_content">
-        CÉNIT PLATAFORMA MUSICAL &bull; PÁGINA <pdf:pagenumber> DE <pdf:pagecount>
-    </div>
-
-    <div>
-        <div class="main-title">Ranking de Reproducciones</div>
-        <div class="main-desc">Métrica gerencial que consolida las 10 pistas musicales con mayor volumen de interacción activa durante el periodo de evaluación en curso.</div>
-
-        <table class="data-table">
-            <thead>
-                <tr>
-                    <th width="10%" style="text-align: center;">Rank</th>
-                    <th width="45%">Título de la Pista</th>
-                    <th width="30%">Artista Principal</th>
-                    <th width="15%" style="text-align: right;">Escuchas</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for c in canciones %}
-                <tr>
-                    <td class="rank">#{{ forloop.counter }}</td>
-                    <td class="track-title">{{ c.tituloCancion }}</td>
-                    <td class="artist">{{ c.nombreArtistico }}</td>
-                    <td class="repros">{{ c.total_escuchas_mes }}</td>
-                </tr>
-                {% empty %}
-                <tr>
-                    <td colspan="4" style="text-align: center; color: #888; padding: 40px;">Datos insuficientes para generar el ranking en este momento.</td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
-    </div>
 </body>
 </html>

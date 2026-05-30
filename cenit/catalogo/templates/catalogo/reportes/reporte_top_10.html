@@ -16,10 +16,10 @@
         body, html { background: #ffffff !important; color: #000000 !important; }
         aside, header, .no-print, .breadcrumb, #edit-banner { display: none !important; }
         main { margin: 0 !important; padding: 0 !important; width: 100% !important; }
-
+        
         .print-header { display: flex !important; }
         .glass-panel { background: #ffffff !important; border: none !important; box-shadow: none !important; border-radius: 0 !important; margin: 0 40px !important;}
-
+        
         table { width: 100% !important; border-collapse: collapse !important; margin-top: 10px; }
         th { background-color: #1a1b20 !important; color: #45F3FF !important; border: none !important; }
         td { border-bottom: 1px solid #e5e7eb !important; color: #374151 !important; }
@@ -46,12 +46,11 @@
     <div class="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-8 border-b border-white/5 pb-6 no-print">
         <div>
             <h1 class="text-4xl font-extrabold text-white flex items-center gap-3">
-                <span class="material-symbols-outlined text-yellow-500 text-4xl">trophy</span>
                 Ranking de Reproducciones
             </h1>
             <p class="text-on-surface-variant mt-2 text-sm">Las 10 pistas musicales con mayor volumen de escuchas activas consolidadas a la fecha.</p>
         </div>
-
+        
         <div class="flex items-center gap-3">
             <button onclick="window.print()" class="inline-flex items-center gap-2 px-4 py-2.5 bg-white/5 hover:bg-white/10 text-white rounded-xl border border-white/10 text-sm font-medium transition-all">
                 <span class="material-symbols-outlined text-[18px]">print</span> Imprimir
@@ -99,7 +98,7 @@
         var oldHtml = btn.innerHTML;
         btn.disabled = true;
         btn.innerHTML = '<span class="material-symbols-outlined animate-spin text-[18px]">progress_activity</span> Procesando...';
-
+        
         try {
             var res = await fetch(url);
             var data = await res.json();
