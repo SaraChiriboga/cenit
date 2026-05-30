@@ -217,9 +217,7 @@ select option {
             <!-- Columna derecha -->
             <div class="xl:col-span-3 space-y-6">
 
-                <!-- Barra de búsqueda con logo Spotify -->
                 <div class="p-4 bg-black/40 rounded-2xl border border-white/10 flex gap-4 items-center backdrop-blur-md">
-                    <!-- Logo Spotify SVG -->
                     <svg class="spotify-logo ml-2" viewBox="0 0 24 24" fill="#1DB954" xmlns="http://www.w3.org/2000/svg">
                         <path d="M12 0C5.4 0 0 5.4 0 12s5.4 12 12 12 12-5.4 12-12S18.66 0 12 0zm5.521 17.34c-.24.359-.66.48-1.021.24-2.82-1.74-6.36-2.101-10.561-1.141-.418.122-.779-.179-.899-.539-.12-.421.18-.78.54-.9 4.56-1.021 8.52-.6 11.64 1.32.42.18.479.659.301 1.02zm1.44-3.3c-.301.42-.841.6-1.262.3-3.239-1.98-8.159-2.58-11.939-1.38-.479.12-1.02-.12-1.14-.6-.12-.48.12-1.021.6-1.141C9.6 9.9 15 10.561 18.72 12.84c.361.181.54.78.241 1.2zm.12-3.36C15.24 8.4 8.82 8.16 5.16 9.301c-.6.179-1.2-.181-1.38-.721-.18-.601.18-1.2.72-1.381 4.26-1.26 11.28-1.02 15.721 1.621.539.3.719 1.02.419 1.56-.299.421-1.02.599-1.559.3z"/>
                     </svg>
@@ -239,13 +237,13 @@ select option {
                                class="w-full bg-black/30 border border-white/10 rounded-xl p-4 outline-none focus:ring-2 ring-secondary/30">
                     </div>
                     <div>
-                        <label class="block text-xs font-bold text-white/60 uppercase mb-2">Artista</label>
-                        <input type="text" id="artist_name" name="artista"
-                               class="w-full bg-black/30 border border-white/10 rounded-xl p-4 outline-none focus:ring-2 ring-secondary/30">
+                        <label class="block text-xs font-bold text-white/60 uppercase mb-2">Artista (Autocompletado)</label>
+                        <input type="text" id="artist_name" name="artista" disabled
+                               class="w-full bg-black/30 border border-white/10 rounded-xl p-4 outline-none focus:ring-2 ring-secondary/30 opacity-50 cursor-not-allowed" placeholder="Se asigna en colaboradores">
                     </div>
                     <div>
                         <label class="block text-xs font-bold text-white/60 uppercase mb-2">Álbum</label>
-                        <select name="album" id="album-select" class="w-full bg-black/30 border border-white/10 rounded-xl p-4 outline-none">
+                        <select name="album" id="album-select" required class="native-select w-full bg-black/30 border border-white/10 rounded-xl p-4 outline-none focus:ring-2 ring-secondary/30">
                             <option value="">Seleccione un álbum</option>
                             {% for album in albumes %}<option value="{{ album.idalbum }}">{{ album.tituloalbum }}</option>{% endfor %}
                         </select>
@@ -253,7 +251,7 @@ select option {
                     </div>
                     <div>
                         <label class="block text-xs font-bold text-white/60 uppercase mb-2">Género</label>
-                        <select name="genero" id="genero-select" class="w-full bg-black/30 border border-white/10 rounded-xl p-4 outline-none">
+                        <select name="genero" id="genero-select" class="native-select w-full bg-black/30 border border-white/10 rounded-xl p-4 outline-none focus:ring-2 ring-secondary/30">
                             {% for genero in generos %}<option value="{{ genero.idgenero }}">{{ genero.nombregenero }}</option>{% endfor %}
                         </select>
                         <div id="genero-msg" class="status-msg"></div>
@@ -261,7 +259,7 @@ select option {
                     <div>
                         <label class="block text-xs font-bold text-white/60 uppercase mb-2">Duración (seg)</label>
                         <input type="number" name="duracionseg" id="duracionseg"
-                               class="w-full bg-black/30 border border-white/10 rounded-xl p-4 outline-none">
+                               class="w-full bg-black/30 border border-white/10 rounded-xl p-4 outline-none focus:ring-2 ring-secondary/30">
                     </div>
                     <div class="flex items-end pb-2">
                         <label class="flex items-center gap-3 cursor-pointer">
@@ -269,6 +267,41 @@ select option {
                                    class="w-6 h-6 rounded border-white/20 bg-black/30 accent-secondary">
                             <span class="font-bold text-white/80">Contenido Explícito (E)</span>
                         </label>
+                    </div>
+                </div>
+
+                <div class="glass-ultra p-10 rounded-3xl text-white">
+                    <div class="flex justify-between items-center mb-6">
+                        <div>
+                            <h3 class="text-sm font-semibold text-white/50 uppercase tracking-wider flex items-center gap-2">
+                                <span class="material-symbols-outlined text-base">group</span>
+                                COLABORADORES
+                            </h3>
+                            <p class="text-xs text-white/40 mt-1">Añade los artistas vinculados a esta pista</p>
+                        </div>
+                        <button type="button" onclick="addColabRow()" class="flex items-center gap-2 px-4 py-2 bg-secondary/10 hover:bg-secondary/20 text-secondary border border-secondary/30 rounded-xl transition-colors text-sm font-bold">
+                            <span class="material-symbols-outlined text-[18px]">add</span>
+                            Añadir Colaborador
+                        </button>
+                    </div>
+
+                    <div id="colabs-container" class="space-y-3">
+                        <div class="colab-row flex items-center gap-4">
+                            <select name="colab_artistas" class="native-select flex-1 bg-black/30 border border-white/10 rounded-xl p-4 outline-none focus:ring-2 ring-secondary/30 text-white text-sm">
+                                <option value="" disabled selected>Seleccione artista principal...</option>
+                                {% for a in artistas %}
+                                <option value="{{ a.idartista }}">{{ a.nombreartistico }}</option>
+                                {% endfor %}
+                            </select>
+                            <select name="colab_roles" class="native-select w-1/3 bg-black/30 border border-white/10 rounded-xl p-4 outline-none focus:ring-2 ring-secondary/30 text-white text-sm">
+                                <option value="Principal" selected>Principal</option>
+                                <option value="Invitado">Invitado</option>
+                                <option value="Remixer">Remixer</option>
+                            </select>
+                            <button type="button" onclick="this.closest('.colab-row').remove()" class="p-4 text-white/40 hover:text-red-400 bg-black/30 hover:bg-red-500/10 border border-white/10 rounded-xl transition-all">
+                                <span class="material-symbols-outlined text-[20px]">delete</span>
+                            </button>
+                        </div>
                     </div>
                 </div>
 
@@ -426,6 +459,20 @@ select option {
                 applyStyles(item.album_cover);
                 loadPreview(item.preview_url, item.name, item.artist);
 
+                // --- NUEVO: AUTOCOMPLETADO DE COLABORADORES ---
+                const colabsContainer = document.getElementById('colabs-container');
+                colabsContainer.innerHTML = ''; // Limpiamos cualquier fila anterior
+
+                // 1. Añadimos siempre al Artista Principal
+                addColabRow(item.artist, 'Principal');
+                document.getElementById('artist_name').value = item.artist; // Llena el campo de visualización
+
+                // 2. Añadimos a los Feats / Invitados (Si los hay)
+                if (item.collaborators && item.collaborators.length > 0) {
+                    item.collaborators.forEach(featName => {
+                        addColabRow(featName, 'Invitado');
+                    });
+                }
                 // 1. Intentar autoselección
                 const albumEncontrado = autoSelect('album-select', item.album_name);
 
@@ -495,7 +542,7 @@ select option {
         const data = await res.json();
 
         if (!data.existe) {
-            let createUrl = tipo === 'album' ? "{% url 'add_album' %}" : "{% url 'genero_add' %}";
+            let createUrl = tipo === 'album' ? "{% url 'add_album' %}" : "{% url 'add_genre' %}";
             msgContainer.innerHTML = `<div class="text-red-400 text-xs mt-1">⚠️ "${nombre}" no existe. <a href="${createUrl}?nombre=${encodeURIComponent(nombre)}" class="error-link" target="_blank">Crear ${tipo}</a></div>`;
         }
 
@@ -556,5 +603,60 @@ select option {
                 setTimeout(() => toast.remove(), 300);
             }, 3500);
         }
+
+        // Plantilla oculta en JS para clonar filas de colaboradores
+    const colabTemplate = `
+        <div class="colab-row flex items-center gap-4 animate-in fade-in slide-in-from-top-2">
+            <select name="colab_artistas" class="native-select flex-1 bg-black/30 border border-white/10 rounded-xl p-4 outline-none focus:ring-2 ring-secondary/30 text-white text-sm">
+                <option value="" disabled selected>Seleccione artista...</option>
+                {% for a in artistas %}
+                <option value="{{ a.idartista }}">{{ a.nombreartistico|escapejs }}</option>
+                {% endfor %}
+            </select>
+            <select name="colab_roles" class="native-select w-1/3 bg-black/30 border border-white/10 rounded-xl p-4 outline-none focus:ring-2 ring-secondary/30 text-white text-sm">
+                <option value="" disabled selected>Seleccione rol...</option>
+                <option value="Principal">Principal</option>
+                <option value="Invitado">Invitado</option>
+                <option value="Remixer">Remixer</option>
+            </select>
+            <button type="button" onclick="this.closest('.colab-row').remove()" class="p-4 text-white/40 hover:text-red-400 bg-black/30 hover:bg-red-500/10 border border-white/10 rounded-xl transition-all">
+                <span class="material-symbols-outlined text-[20px]">delete</span>
+            </button>
+        </div>
+    `;
+
+    function addColabRow(artistName = null, role = null) {
+        const container = document.getElementById('colabs-container');
+        container.insertAdjacentHTML('beforeend', colabTemplate);
+
+        const newRow = container.lastElementChild;
+        const artistSelect = newRow.querySelector('select[name="colab_artistas"]');
+        const roleSelect = newRow.querySelector('select[name="colab_roles"]');
+
+        // Autoseleccionar Rol
+        if (role) {
+            for (let i = 0; i < roleSelect.options.length; i++) {
+                if (roleSelect.options[i].value === role) {
+                    roleSelect.selectedIndex = i;
+                    break;
+                }
+            }
+        }
+
+        // Autoseleccionar Artista y lanzar Toast de error si no existe en la BD
+        if (artistName) {
+            let found = false;
+            for (let i = 0; i < artistSelect.options.length; i++) {
+                if (artistSelect.options[i].text.trim().toLowerCase() === artistName.trim().toLowerCase()) {
+                    artistSelect.selectedIndex = i;
+                    found = true;
+                    break;
+                }
+            }
+            if (!found) {
+                showToast(`El artista "${artistName}" no está en tu base de datos. Fila añadida, regístralo manualmente.`, 'error');
+            }
+        }
+    }
 </script>
 {% endblock %}

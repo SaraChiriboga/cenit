@@ -48,25 +48,29 @@ class SpotifyClient:
         results = []
 
         for t in tracks:
-            # Obtener el nombre del álbum (directamente disponible)
+            # Obtener el nombre del álbum
             album_name = t['album']['name']
 
-            # Obtener el género del artista (llamada extra a Spotify)
+            # Obtener el género del artista
             artist_id = t['artists'][0]['id']
             genre = self._get_artist_genres(artist_id)
 
             # Preview de Deezer
-            preview = self._get_deezer_preview(
-                t['name'],
-                t['artists'][0]['name']
-            )
+            main_artist_name = t['artists'][0]['name']
+            preview = self._get_deezer_preview(t['name'], main_artist_name)
+
+            # --- NUEVA LÓGICA PARA FEATS ---
+            # t['artists'] trae todos los artistas de la canción.
+            # El [0] es el principal. Del [1:] en adelante son los invitados.
+            collaborators = [a['name'] for a in t['artists'][1:]]
 
             results.append({
                 'id': t['id'],
                 'name': t['name'],
-                'artist': t['artists'][0]['name'],
-                'album_name': album_name,  # ← NUEVO
-                'genre': genre,  # ← NUEVO
+                'artist': main_artist_name,
+                'collaborators': collaborators,  # ← Mandamos la lista de invitados al frontend
+                'album_name': album_name,
+                'genre': genre,
                 'album_cover': t['album']['images'][1]['url'] if t['album']['images'] else None,
                 'spotify_url': t['external_urls']['spotify'],
                 'duration': round(t['duration_ms'] / 1000),

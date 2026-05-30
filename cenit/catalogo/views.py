@@ -41,11 +41,11 @@ def add_track_ajax(request):
         return render(request, 'catalogo/canciones/add_track.html', {
             'albumes': Album.objects.all(),
             'generos': Genero.objects.all(),
+            'artistas': Artista.objects.all(),  # <-- AÑADIDO PARA LOS SELECTS
         })
 
     if request.method == 'POST':
         try:
-            # Captura todos los datos
             titulo = request.POST.get('titulocancion')
             album_id = request.POST.get('album')
             genero_id = request.POST.get('genero')
@@ -60,16 +60,39 @@ def add_track_ajax(request):
             if Cancion.objects.filter(titulocancion__iexact=titulo, album_id=album_id).exists():
                 return JsonResponse({'status': 'error', 'message': 'La canción ya existe en este álbum.'}, status=400)
 
-            # Inserción asegurando que spotifyUrlAPI se guarde
-            with connection.cursor() as cursor:
-                cursor.execute("""
-                    INSERT INTO [Catalogo].[Cancion] 
-                    (tituloCancion, duracionSeg, esExplicita, estadoPublicacion, urlPortada, Album_idAlbum, Genero_idGenero, spotifyUrlAPI)
-                    VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
-                """, [titulo, duracion or 0, 1 if es_explicita else 0, 'Borrador', url_portada, album_id, genero_id,
-                      spotify_url])
+            with transaction.atomic():
+                with connection.cursor() as cursor:
+                    # 1. Insertar la canción
+                    cursor.execute("""
+                        INSERT INTO [Catalogo].[Cancion] 
+                        (tituloCancion, duracionSeg, esExplicita, estadoPublicacion, urlPortada, Album_idAlbum, Genero_idGenero, spotifyUrlAPI)
+                        VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
+                    """, [titulo, duracion or 0, 1 if es_explicita else 0, 'Borrador', url_portada, album_id, genero_id,
+                          spotify_url])
 
-            return JsonResponse({'status': 'success', 'message': 'Canción guardada correctamente.'})
+                    # 2. Obtener el ID de la canción recién insertada
+                    cursor.execute("SELECT SCOPE_IDENTITY()")
+                    cancion_id = cursor.fetchone()[0]
+
+                    # 3. Procesar los colaboradores dinámicos
+                    colab_artistas = request.POST.getlist('colab_artistas')
+                    colab_roles = request.POST.getlist('colab_roles')
+
+                    for artista_id, rol in zip(colab_artistas, colab_roles):
+                        if artista_id and rol:
+                            # Validar que no se duplique el mismo artista en la misma canción
+                            cursor.execute("""
+                                SELECT idColaboracion FROM [Catalogo].[Colaboracion] 
+                                WHERE Cancion_idCancion = %s AND Artista_idArtista = %s
+                            """, [cancion_id, artista_id])
+
+                            if not cursor.fetchone():
+                                cursor.execute("""
+                                    INSERT INTO [Catalogo].[Colaboracion] (Cancion_idCancion, Artista_idArtista, rolArtista)
+                                    VALUES (%s, %s, %s)
+                                """, [cancion_id, artista_id, rol])
+
+            return JsonResponse({'status': 'success', 'message': 'Canción y colaboradores guardados correctamente.'})
 
         except Exception as e:
             return JsonResponse({'status': 'error', 'message': str(e)}, status=400)
@@ -130,63 +153,93 @@ def delete_track(request, pk):
         return JsonResponse({'status': 'success'})
     return JsonResponse({'status': 'error'}, status=400)
 
+
 @login_required
 def read_track(request, pk):
     cancion = get_object_or_404(
         Cancion.objects.select_related('album__artista', 'genero'),
         idcancion=pk
     )
+
+    # CORRECCIÓN AQUÍ: cancion_id=pk
+    colaboraciones = Colaboracion.objects.select_related('artista').filter(cancion_id=pk)
+
     return render(request, 'catalogo/canciones/read_track.html', {
         'cancion': cancion,
         'albumes': Album.objects.all(),
         'generos': Genero.objects.all(),
+        'artistas': Artista.objects.all(),
         'estados': ['Borrador', 'Programada', 'Publicada'],
+        'colab_principal': colaboraciones.filter(rolartista='Principal').first(),
+        'colabs_extra': colaboraciones.exclude(rolartista='Principal'),
     })
 
 
 @login_required
 def edit_track(request, pk):
-    # Validamos que la canción exista
     cancion = get_object_or_404(Cancion, idcancion=pk)
 
-    # 1. Si es POST: Guardamos los cambios en la base de datos
     if request.method == 'POST':
         url_portada_frontend = request.POST.get('urlportada')
+        try:
+            with transaction.atomic():
+                with connection.cursor() as cursor:
+                    # 1. Actualizar los datos de la Canción
+                    cursor.execute("""
+                        UPDATE [Catalogo].[Cancion]
+                        SET tituloCancion=%s, duracionSeg=%s, esExplicita=%s,
+                            estadoPublicacion=%s, Album_idAlbum=%s, Genero_idGenero=%s, urlPortada=%s
+                        WHERE idCancion=%s
+                    """, [
+                        request.POST.get('titulocancion'),
+                        request.POST.get('duracionseg'),
+                        1 if request.POST.get('esexplicita') == 'on' else 0,
+                        request.POST.get('estadopublicacion'),
+                        request.POST.get('album'),
+                        request.POST.get('genero'),
+                        url_portada_frontend,
+                        pk
+                    ])
 
-        with connection.cursor() as cursor:
-            cursor.execute("""
-                UPDATE [Catalogo].[Cancion]
-                SET tituloCancion=%s, 
-                    duracionSeg=%s, 
-                    esExplicita=%s,
-                    estadoPublicacion=%s, 
-                    Album_idAlbum=%s, 
-                    Genero_idGenero=%s,
-                    urlPortada=%s
-                WHERE idCancion=%s
-            """, [
-                request.POST.get('titulocancion'),
-                request.POST.get('duracionseg'),
-                1 if request.POST.get('esexplicita') == 'on' else 0,
-                request.POST.get('estadopublicacion'),
-                request.POST.get('album'),
-                request.POST.get('genero'),
-                url_portada_frontend,
-                pk
-            ])
+                    # 2. Manejo de Colaboradores: Borramos los extras actuales
+                    # (Protegemos al artista Principal para no borrarlo)
+                    cursor.execute("""
+                        DELETE FROM [Catalogo].[Colaboracion] 
+                        WHERE Cancion_idCancion = %s AND rolArtista != 'Principal'
+                    """, [pk])
 
-        return JsonResponse({
-            'status': 'success',
-            'urlportada': url_portada_frontend
-        })
+                    # 3. Insertar los colaboradores actualizados que viajan desde el frontend
+                    colab_artistas = request.POST.getlist('colab_artistas')
+                    colab_roles = request.POST.getlist('colab_roles')
 
-    estados_publicacion = ['Borrador', 'Publicado', 'Programada']
+                    for artista_id, rol in zip(colab_artistas, colab_roles):
+                        if artista_id and rol:
+                            # Verificamos que no se intente duplicar un artista
+                            cursor.execute("""
+                                SELECT idColaboracion FROM [Catalogo].[Colaboracion] 
+                                WHERE Cancion_idCancion = %s AND Artista_idArtista = %s
+                            """, [pk, artista_id])
+
+                            if not cursor.fetchone():
+                                cursor.execute("""
+                                    INSERT INTO [Catalogo].[Colaboracion] (Cancion_idCancion, Artista_idArtista, rolArtista)
+                                    VALUES (%s, %s, %s)
+                                """, [pk, artista_id, rol])
+
+            return JsonResponse({'status': 'success', 'urlportada': url_portada_frontend})
+        except Exception as e:
+            return JsonResponse({'status': 'error', 'message': str(e)}, status=400)
+
+    colaboraciones = Colaboracion.objects.filter(cancion_id=pk)
 
     context = {
         'cancion': cancion,
         'albumes': Album.objects.all(),
         'generos': Genero.objects.all(),
-        'estados': estados_publicacion
+        'artistas': Artista.objects.all(),
+        'estados': ['Borrador', 'Programada', 'Publicada'],
+        'colab_principal': colaboraciones.filter(rolartista='Principal').first(),
+        'colabs_extra': colaboraciones.exclude(rolartista='Principal'),
     }
 
     return render(request, 'catalogo/canciones/edit_track.html', context)

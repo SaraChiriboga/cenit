@@ -42,6 +42,7 @@ staticfiles/
 local_settings.py
 secrets.json
 .env
+spotifyCreds.json
 
 # ==============================================================================
 # 5. CONTEXTO DE SISTEMA OPERATIVO
