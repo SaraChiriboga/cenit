@@ -177,12 +177,16 @@ def read_track(request, pk):
         Cancion.objects.select_related('album__artista', 'genero'),
         idcancion=pk
     )
-
-    # CORRECCIÓN AQUÍ: cancion_id=pk
     colaboraciones = Colaboracion.objects.select_related('artista').filter(cancion_id=pk)
+
+    # Ejecutamos la función escalar de SQL Server directamente
+    with connection.cursor() as cursor:
+        cursor.execute("SELECT [Catalogo].[fn_FormatearDuracion](%s)", [cancion.duracionseg or 0])
+        duracion_formateada = cursor.fetchone()[0]
 
     return render(request, 'catalogo/canciones/read_track.html', {
         'cancion': cancion,
+        'duracion_formateada': duracion_formateada,  # <-- Enviamos el tiempo amigable MM:SS
         'albumes': Album.objects.all(),
         'generos': Genero.objects.all(),
         'artistas': Artista.objects.all(),
@@ -201,7 +205,6 @@ def edit_track(request, pk):
         try:
             with transaction.atomic():
                 with connection.cursor() as cursor:
-                    # 1. Actualizar los datos de la Canción
                     cursor.execute("""
                         UPDATE [Catalogo].[Cancion]
                         SET tituloCancion=%s, duracionSeg=%s, esExplicita=%s,
@@ -218,20 +221,16 @@ def edit_track(request, pk):
                         pk
                     ])
 
-                    # 2. Manejo de Colaboradores: Borramos los extras actuales
-                    # (Protegemos al artista Principal para no borrarlo)
                     cursor.execute("""
                         DELETE FROM [Catalogo].[Colaboracion] 
                         WHERE Cancion_idCancion = %s AND rolArtista != 'Principal'
                     """, [pk])
 
-                    # 3. Insertar los colaboradores actualizados que viajan desde el frontend
                     colab_artistas = request.POST.getlist('colab_artistas')
                     colab_roles = request.POST.getlist('colab_roles')
 
                     for artista_id, rol in zip(colab_artistas, colab_roles):
                         if artista_id and rol:
-                            # Verificamos que no se intente duplicar un artista
                             cursor.execute("""
                                 SELECT idColaboracion FROM [Catalogo].[Colaboracion] 
                                 WHERE Cancion_idCancion = %s AND Artista_idArtista = %s
@@ -249,8 +248,14 @@ def edit_track(request, pk):
 
     colaboraciones = Colaboracion.objects.filter(cancion_id=pk)
 
+    # Ejecutamos la función escalar de SQL Server para el modo edición clásico
+    with connection.cursor() as cursor:
+        cursor.execute("SELECT [Catalogo].[fn_FormatearDuracion](%s)", [cancion.duracionseg or 0])
+        duracion_formateada = cursor.fetchone()[0]
+
     context = {
         'cancion': cancion,
+        'duracion_formateada': duracion_formateada,  # <-- Enviamos aquí también
         'albumes': Album.objects.all(),
         'generos': Genero.objects.all(),
         'artistas': Artista.objects.all(),
@@ -258,7 +263,76 @@ def edit_track(request, pk):
         'colab_principal': colaboraciones.filter(rolartista='Principal').first(),
         'colabs_extra': colaboraciones.exclude(rolartista='Principal'),
     }
+    return render(request, 'catalogo/canciones/edit_track.html', context)
 
+
+@login_required
+def edit_track(request, pk):
+    cancion = get_object_or_404(Cancion, idcancion=pk)
+
+    if request.method == 'POST':
+        url_portada_frontend = request.POST.get('urlportada')
+        try:
+            with transaction.atomic():
+                with connection.cursor() as cursor:
+                    cursor.execute("""
+                        UPDATE [Catalogo].[Cancion]
+                        SET tituloCancion=%s, duracionSeg=%s, esExplicita=%s,
+                            estadoPublicacion=%s, Album_idAlbum=%s, Genero_idGenero=%s, urlPortada=%s
+                        WHERE idCancion=%s
+                    """, [
+                        request.POST.get('titulocancion'),
+                        request.POST.get('duracionseg'),
+                        1 if request.POST.get('esexplicita') == 'on' else 0,
+                        request.POST.get('estadopublicacion'),
+                        request.POST.get('album'),
+                        request.POST.get('genero'),
+                        url_portada_frontend,
+                        pk
+                    ])
+
+                    cursor.execute("""
+                        DELETE FROM [Catalogo].[Colaboracion] 
+                        WHERE Cancion_idCancion = %s AND rolArtista != 'Principal'
+                    """, [pk])
+
+                    colab_artistas = request.POST.getlist('colab_artistas')
+                    colab_roles = request.POST.getlist('colab_roles')
+
+                    for artista_id, rol in zip(colab_artistas, colab_roles):
+                        if artista_id and rol:
+                            cursor.execute("""
+                                SELECT idColaboracion FROM [Catalogo].[Colaboracion] 
+                                WHERE Cancion_idCancion = %s AND Artista_idArtista = %s
+                            """, [pk, artista_id])
+
+                            if not cursor.fetchone():
+                                cursor.execute("""
+                                    INSERT INTO [Catalogo].[Colaboracion] (Cancion_idCancion, Artista_idArtista, rolArtista)
+                                    VALUES (%s, %s, %s)
+                                """, [pk, artista_id, rol])
+
+            return JsonResponse({'status': 'success', 'urlportada': url_portada_frontend})
+        except Exception as e:
+            return JsonResponse({'status': 'error', 'message': str(e)}, status=400)
+
+    colaboraciones = Colaboracion.objects.filter(cancion_id=pk)
+
+    # Ejecutamos la función escalar de SQL Server para el modo edición clásico
+    with connection.cursor() as cursor:
+        cursor.execute("SELECT [Catalogo].[fn_FormatearDuracion](%s)", [cancion.duracionseg or 0])
+        duracion_formateada = cursor.fetchone()[0]
+
+    context = {
+        'cancion': cancion,
+        'duracion_formateada': duracion_formateada,  # <-- Enviamos aquí también
+        'albumes': Album.objects.all(),
+        'generos': Genero.objects.all(),
+        'artistas': Artista.objects.all(),
+        'estados': ['Borrador', 'Programada', 'Publicada'],
+        'colab_principal': colaboraciones.filter(rolartista='Principal').first(),
+        'colabs_extra': colaboraciones.exclude(rolartista='Principal'),
+    }
     return render(request, 'catalogo/canciones/edit_track.html', context)
 
 # ══════════════════════════════════════════
